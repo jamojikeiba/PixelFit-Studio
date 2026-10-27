@@ -1,4 +1,4 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PixelFit Studio — ドット絵精密エディター</title><style>
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PixelFit Studio v2.0 — MONONOKE FRONTIER スプライト制作</title><style>
 :root{font-family:system-ui,'Meiryo',sans-serif;color:#e6edf3;background:#10151c}*{box-sizing:border-box}body{margin:0}header{padding:17px 24px;border-bottom:1px solid #2c3642;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}h1{font-size:21px;margin:0;letter-spacing:.2px}header small{color:#92a5b9}main{display:grid;grid-template-columns:320px minmax(0,1fr);gap:18px;padding:18px;max-width:1450px;margin:auto}aside,.panel{background:#19212b;border:1px solid #2d3b4b;border-radius:12px;padding:16px}aside{align-self:start}h2{font-size:15px;margin:0 0 12px}h3{font-size:13px;color:#b8c9da;margin:17px 0 9px}.muted{color:#9aabbc;font-size:12px;line-height:1.6}.group{margin:11px 0}label{display:block;font-size:12px;color:#c5d2de;margin:0 0 5px}input[type=file]{width:100%;font-size:11px}input[type=number],select{width:100%;background:#101721;color:#edf4fb;border:1px solid #415265;border-radius:7px;padding:8px}input[type=range]{width:100%;accent-color:#61c2ad}button{border:1px solid #4c6074;border-radius:8px;background:#263647;color:#eef5fb;padding:9px 11px;cursor:pointer;font-weight:600}button:hover{background:#34495d}button.primary{background:#257b6e;border-color:#329786}button.primary:hover{background:#2c9888}button:disabled{opacity:.4;cursor:not-allowed}.buttons{display:flex;flex-wrap:wrap;gap:7px}.buttons button{flex:1}.row{display:flex;gap:8px;align-items:center}.row>*{flex:1}.setting{display:grid;grid-template-columns:1fr 68px;align-items:center;gap:8px;margin:7px 0}.setting label{margin:0}.setting input{width:68px}.previewrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.preview{min-width:0}.preview .title{font-size:12px;font-weight:700;color:#c2d3e4;margin:0 0 8px}.viewport{position:relative;background-color:#f0f2f5;background-image:linear-gradient(45deg,#d8dde3 25%,transparent 25%),linear-gradient(-45deg,#d8dde3 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#d8dde3 75%),linear-gradient(-45deg,transparent 75%,#d8dde3 75%);background-size:24px 24px;background-position:0 0,0 12px,12px -12px,-12px 0;display:flex;align-items:center;justify-content:center;aspect-ratio:1;border-radius:8px;overflow:hidden;touch-action:none}canvas{width:100%;height:100%;image-rendering:pixelated;cursor:crosshair}.status{font-size:12px;color:#a8bdcb;margin-top:9px;min-height:19px}.toolbar{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}.toolbar button.active{background:#226c77;border-color:#5bd0ce}.help{font-size:12px;color:#a8b9c9;line-height:1.75}.badge{display:inline-block;background:#253e42;color:#7fe1c6;padding:4px 8px;border-radius:6px;font-size:11px}.divider{border-top:1px solid #354150;margin:16px 0}footer{color:#8092a5;font-size:11px;padding:10px 22px 24px;max-width:1450px;margin:auto}@media(max-width:1050px){main{grid-template-columns:1fr}.previewrow{gap:7px}}@media(max-width:600px){.previewrow{grid-template-columns:1fr}.viewport{max-width:420px;margin:auto}} 
 /* AI prompt generator */
 .prompt-maker{max-width:1414px;margin:18px auto 0;padding:18px;background:#19212b;border:1px solid #2d3b4b;border-radius:12px}
@@ -62,8 +62,26 @@ main#editorMain{max-width:1400px;margin:0 auto;display:grid;grid-template-column
 .art-compliance-actions{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.art-compliance-actions button{font-size:12px}
 .art-validation-report{font-size:12px;line-height:1.7;background:#101c23;border:1px solid #344850;padding:11px;border-radius:7px;white-space:pre-wrap;word-break:break-word}
 .art-validation-report[data-result="pass"]{border-color:#427a64}.art-validation-report[data-result="fail"]{border-color:#a56c56}
+</style><style>
+/* v2.0 sprite prompt composer and native-pixel size reference */
+.sprite-tools{background:#111f29;border:1px solid #3c5965;border-radius:10px;padding:13px;grid-column:1/-1;margin:6px 0}
+.sprite-tools h3{margin:0 0 8px;color:#a5e6d4;font-size:14px}
+.sprite-tools .hint{font-size:11px;color:#a8bdc8;line-height:1.55;margin:6px 0 10px}
+.sprite-checks{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.sprite-checks label{display:inline-flex;align-items:center;gap:6px;margin:0;padding:7px 9px;border:1px solid #405565;border-radius:7px;background:#202e39;cursor:pointer}
+.sprite-checks input{accent-color:#61c2ad}
+.sprite-dims{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:9px 0}
+.sprite-dims input{width:100%;background:#101721;color:#edf4fb;border:1px solid #415265;border-radius:7px;padding:8px}
+.sprite-dims label{min-width:0}
+.sprite-size-preview{margin-top:14px;background:#111f29;border:1px solid #3c5965;border-radius:10px;padding:14px}
+.sprite-size-preview h3{font-size:14px;margin:0 0 7px;color:#a5e6d4}
+.sprite-size-preview canvas{display:block;width:100%;height:auto;max-height:360px;background:#0c151b;border:1px solid #354956;border-radius:7px;image-rendering:pixelated}
+.sprite-size-preview input[type=file]{margin-top:6px}
+.sprite-size-preview .sprite-dims{grid-template-columns:repeat(2,minmax(0,1fr))}
+.sprite-batch-picker{margin-top:9px}
+@media(max-width:650px){.sprite-dims{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style></head><body>
-<header><div><h1>PixelFit <span style="color:#6ed9bd">Studio</span> <span class="badge">v1.9 / FRONTIER 正式アート規格</span></h1><small>ドット絵を描き直さず、1px単位で形を整える</small></div><div class="buttons"><button id="reset">元に戻す</button><button id="undo">↶ Undo</button><button id="redo">↷ Redo</button><button class="primary" id="export">PNGを書き出す</button></div></header>
+<header><div><h1>PixelFit <span style="color:#6ed9bd">Studio</span> <span class="badge">v2.0 / MONONOKE FRONTIER</span></h1><small>ドット絵を描き直さず、1px単位で形を整える</small></div><div class="buttons"><button id="reset">元に戻す</button><button id="undo">↶ Undo</button><button id="redo">↷ Redo</button><button class="primary" id="export">PNGを書き出す</button></div></header>
 <main id="editorMain">
 <aside class="controls">
  <div class="controls-head"><h2>編集ツール</h2><span class="muted">画像を見ながら調整</span></div>
@@ -113,7 +131,7 @@ main#editorMain{max-width:1400px;margin:0 auto;display:grid;grid-template-column
  <div class="main-canvas-wrap"><div class="viewport edit-viewport" style="position:relative"><canvas id="result" width="64" height="64"></canvas><canvas id="artGuideOverlay" width="64" height="64" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;image-rendering:pixelated"></canvas></div></div>
  <div id="msg" class="status editor-message" role="status"></div>
  <section class="art-compliance" id="artCompliance" aria-labelledby="artComplianceTitle">
- <div class="art-compliance-head"><h3 id="artComplianceTitle">FRONTIER TACTICS 規格チェック <span class="badge">art_standard_v1</span></h3><label class="art-guide-toggle"><input type="checkbox" id="showArtGuides" checked> アンカー・身長ガイド</label></div>
+ <div class="art-compliance-head"><h3 id="artComplianceTitle">MONONOKE FRONTIER 規格チェック <span class="badge">art_standard_v1</span></h3><label class="art-guide-toggle"><input type="checkbox" id="showArtGuides" checked> アンカー・身長ガイド</label></div>
  <p class="muted">人物64×64：接地アンカー <strong>(29,57)</strong> ／ 頭頂〜接地 <strong>55px</strong>（参考Y=2）。ガイドは表示専用でPNGに書き込みません。建物・樹木にはこの人物用アンカーを適用しません。</p>
  <div class="art-compliance-actions"><button type="button" id="validateArt" class="primary">現在のPNGを検査</button><button type="button" id="quantizeArt">正式64色に置換（新規候補のみ）</button><button type="button" id="downloadArtMeta">素材メタデータJSON</button></div>
  <div id="artValidationReport" class="art-validation-report" role="status">「現在のPNGを検査」でサイズ・アルファ・色数・パレットを確認できます。</div>
@@ -143,13 +161,17 @@ main#editorMain{max-width:1400px;margin:0 auto;display:grid;grid-template-column
 <div class="convert-preview"><div class="title">変換結果（拡大プレビュー）</div><div class="viewport"><canvas id="convertCanvas" width="64" height="64"></canvas></div><div id="convertStats" class="status"></div></div>
 </div>
 </section></details><details id="aiPromptPanel"><summary>AI素材のプロンプトを作る（全素材共通アート規格）</summary><section class="prompt-maker" aria-labelledby="promptTitle">
-<h2 id="promptTitle">AI素材プロンプト生成 <span class="badge">Codex正式64色＋固定2D投影</span></h2>
+<h2 id="promptTitle">AI素材プロンプト生成 <span class="badge">MONONOKE FRONTIER / 個別スプライト対応</span></h2>
 <p class="muted">Codexのart_standard_v1に合わせ、57.6×36の床、固定2D投影、facing、(29,57)アンカー、正式64色を生成文に反映します。</p>
 <div class="prompt-grid">
 <div class="prompt-controls">
 <div class="wide"><label for="assetPreset">生成プリセット</label><select id="assetPreset"><option value="saku">主人公・榊 朔太郎（宮大工の息子）</option><option value="yokai">妖怪・敵キャラクター</option><option value="npc">仲間・NPC</option><option value="building">和風建築・廃墟</option><option value="tree">木・竹・植物</option><option value="rock">岩・石垣・鉱石</option><option value="terrain">地形・マップ素材</option><option value="custom">自由素材（世界観共通）</option></select></div>
 <div class="wide"><label for="assetName">素材名</label><input id="assetName" type="text" value="榊 朔太郎（宮大工の息子）" maxlength="100" autocomplete="off"></div>
-<div><label for="assetSize">完成キャンバス</label><select id="assetSize"><option value="64">64 × 64 px</option><option value="32">32 × 32 px</option><option value="96">96 × 96 px</option><option value="128">128 × 128 px</option><option value="192">192 × 192 px</option><option value="256">256 × 256 px</option></select></div>
+<div><label for="assetSize">完成キャンバス</label><select id="assetSize"><option value="64">64 × 64 px</option><option value="32">32 × 32 px</option><option value="96">96 × 96 px</option><option value="128">128 × 128 px</option><option value="192">192 × 192 px</option><option value="256">256 × 256 px</option><option value="custom">自由設定（幅×高さ）</option></select></div>
+<div class="wide sprite-dims" id="spriteCustomSize" hidden>
+<label for="assetWidth">自由設定：幅（px）<input id="assetWidth" type="number" min="16" max="1024" step="1" value="64"></label>
+<label for="assetHeight">自由設定：高さ（px）<input id="assetHeight" type="number" min="16" max="1024" step="1" value="64"></label>
+</div>
 <div><label for="assetView">視点</label><select id="assetView"><option value="iso">斜め見下ろし（3/4ビュー）</option><option value="top">真上からの見下ろし</option><option value="side">横向き</option><option value="front">正面</option></select></div>
 <div class="wide" id="cameraLockGroup" style="border:1px solid #42675f;border-radius:9px;padding:12px;background:#152b2a">
 <label for="cameraDirection" style="font-weight:700;color:#8de2c8">キャラクターの向き facing（固定2D投影）</label>
@@ -162,8 +184,30 @@ main#editorMain{max-width:1400px;margin:0 auto;display:grid;grid-template-column
 <label style="display:flex;gap:9px;align-items:center;margin-top:10px;cursor:pointer"><input id="lockDirection" type="checkbox" checked style="width:18px;height:18px;accent-color:#61c2ad"><span>選択したfacingをプロンプトに明記</span></label>
 <p id="cameraDirectionHelp" class="muted" style="margin:7px 0 0">カメラは常に固定。選択するのはキャラの向きだけです。</p>
 </div>
-<div><label for="assetWorld">世界観・画風</label><select id="assetWorld"><option value="wafu">FRONTIER TACTICS／戦国妖怪ファンタジー</option><option value="frontier">FRONTIER TACTICS／中世ファンタジー</option><option value="ruins">転生ローグライク／現実的な廃墟</option><option value="neutral">汎用レトロRPG</option></select></div>
+<div><label for="assetWorld">世界観・画風</label><select id="assetWorld"><option value="wafu">MONONOKE FRONTIER／戦国妖怪ファンタジー</option><option value="frontier">FRONTIER TACTICS／中世ファンタジー</option><option value="ruins">転生ローグライク／現実的な廃墟</option><option value="neutral">汎用レトロRPG</option></select></div>
 <div><label for="assetPalette">色数の目安</label><select id="assetPalette"><option value="12">最大12色程度</option><option value="16">最大16色程度</option><option value="20">最大20色程度</option><option value="24">最大24色程度</option><option value="32">最大32色程度</option><option value="free">指定なし</option></select></div>
+<section class="sprite-tools" aria-labelledby="spriteToolTitle">
+<h3 id="spriteToolTitle">キャラクタースプライト・ポーズ別プロンプト</h3>
+<label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="spriteMode" checked> スプライト制作モード（1ポーズ＝1枚の透過PNG）</label>
+<p class="hint">1枚に複数ポーズを並べない。各ポーズ・各方向について個別の画像生成指示を作ります。PixelFit Studio自身はAI画像を生成しません。</p>
+<div id="spriteOptions">
+<div class="sprite-checks" id="spritePoseChecks">
+<label><input type="checkbox" value="idle" checked>待機</label>
+<label><input type="checkbox" value="walk_1" checked>歩行①</label>
+<label><input type="checkbox" value="walk_2" checked>歩行②</label>
+<label><input type="checkbox" value="attack" checked>攻撃</label>
+<label><input type="checkbox" value="hit">被弾</label>
+<label><input type="checkbox" value="defeat">倒れる</label>
+</div>
+<label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input id="spriteAllFacings" type="checkbox"> 全4方向を個別生成（オフ：現在選択中の1方向）</label>
+<div class="sprite-dims">
+<label for="spriteBodyHeight">立位身長（px）<input id="spriteBodyHeight" type="number" min="8" max="512" step="1" value="55"></label>
+<label for="spriteAnchorX">接地アンカーX（px）<input id="spriteAnchorX" type="number" min="0" max="1023" step="1" value="29"></label>
+<label for="spriteAnchorY">接地アンカーY（px）<input id="spriteAnchorY" type="number" min="0" max="1023" step="1" value="57"></label>
+</div>
+<div class="buttons"><button type="button" id="spriteBuildBatch" class="primary">ポーズ別プロンプトを生成</button><button type="button" id="spriteBatchDownload" disabled>まとめてTXT保存</button></div>
+<div class="sprite-batch-picker"><label for="spritePromptList">個別プロンプト一覧（1項目＝PNG1枚）</label><select id="spritePromptList" disabled><option>未生成</option></select></div>
+</div></section>
 <div class="wide"><label for="assetDetails">追加の希望（任意）</label><input id="assetDetails" type="text" placeholder="例：手拭いを巻く、木槌を肩に担ぐ、歩行前の待機姿勢" maxlength="400"></div>
 <div class="wide"><div class="prompt-palette-heading"><label>FRONTIER TACTICS 共通64色パレット</label><span id="swatchStatus" class="muted"></span></div><p class="muted">Codex正式64色（基準48色＋追加16色）。新規候補用。クリックでHEXコピー。既存採用済みPNGは変更しません。</p><div id="characterSwatches" class="world-swatches" aria-label="全素材共通64色パレット"></div><p class="muted">Codex確定 palette_64_v1.json に完全一致（基準キャラ48色＋追加16色）。既存採用素材の色を自動変更しません。</p></div>
 </div>
@@ -172,7 +216,15 @@ main#editorMain{max-width:1400px;margin:0 auto;display:grid;grid-template-column
 <div id="promptStatus" class="status" role="status"></div>
 <p class="muted">※画像生成AIが最初から指定サイズ・指定色数を守る保証はありません。生成後に実寸・アルファ透明度を検査し、必要ならピクセル処理で補正する流れです。</p>
 </div>
-</div></section>
+</div>
+<section class="sprite-size-preview" aria-labelledby="spriteSizeTitle">
+<h3 id="spriteSizeTitle">朔太郎（身長55px）とのゲーム内実寸比較</h3>
+<p class="muted">基準キャラと制作対象を同じピクセル倍率・同じ接地ラインに配置します。サイズは上の「立位身長」と「接地アンカー」で変更できます。実際のPNGを読み込んだ場合も、画像ごとの拡大縮小は行いません。</p>
+<div class="sprite-dims"><label for="spriteReferenceFile">基準キャラPNG（任意・初期サンプルあり）<input id="spriteReferenceFile" type="file" accept="image/png"></label><label for="spriteCandidateFile">制作対象PNG（任意）<input id="spriteCandidateFile" type="file" accept="image/png"></label></div>
+<canvas id="spriteScalePreview" width="1000" height="340" aria-label="基準キャラと制作対象の実寸比較"></canvas>
+<div id="spriteScaleStatus" class="status" role="status"></div>
+</section>
+</section>
 </details><details id="updatePanel" class="update-panel"><summary>アプリの更新・オンライン版（同じURLで最新版を使う）</summary>
 <div class="update-content"><h3>更新方法</h3><p class="muted">このHTMLをPCから開く場合は自動上書きできません。GitHub Pagesなどに <code>index.html</code> として公開すれば、今後は同じURLを開くだけで更新版を使えます。</p>
 <div class="update-fields"><label for="onlineUrl">公開したPixelFit StudioのURL</label><input type="url" id="onlineUrl" placeholder="https://ユーザー名.github.io/リポジトリ名/" autocomplete="url" spellcheck="false"><button id="saveOnlineUrl" type="button">URLを保存</button><button class="primary" id="openOnline" type="button">オンライン最新版を開く</button></div>
@@ -180,6 +232,9 @@ main#editorMain{max-width:1400px;margin:0 auto;display:grid;grid-template-column
 <script>
 'use strict';
 window.PIXELFIT_ART=Object.freeze({"version":"1.9","paletteId":"frontier_shared_64_v1","paletteGroups":[["基準キャラ色 1",["#000012","#010015","#07031C","#1C102C","#29233F","#2A1834","#312D44","#361D2F"]],["基準キャラ色 2",["#3C3E4F","#3D223C","#3F2D41","#454E54","#46333D","#4A2135","#4B6148","#4F373A"]],["基準キャラ色 3",["#575C57","#577944","#582531","#58303A","#5E5750","#613C37","#632A2E","#656A64"]],["基準キャラ色 4",["#6D3430","#704A3E","#7D7F74","#803F31","#826656","#845A45","#8B4D39","#908F7E"]],["基準キャラ色 5",["#9A6849","#9D9F8C","#AD7E56","#ADB199","#B44F3B","#B87455","#C7B987","#C89363"]],["基準キャラ色 6",["#CCD1B4","#D37358","#D98265","#E5C17B","#E78F6E","#F6F9D6","#FBB686","#FFC591"]],["追加材質色 1",["#101919","#202C31","#303C3E","#3E4B50","#536E72","#7B8885","#B0B5A2","#DDE0C8"]],["追加材質色 2",["#223A33","#344D3E","#465B46","#647653","#7B8761","#8E7650","#A68B56","#754D40"]]],"palette":["#000012","#010015","#07031C","#1C102C","#29233F","#2A1834","#312D44","#361D2F","#3C3E4F","#3D223C","#3F2D41","#454E54","#46333D","#4A2135","#4B6148","#4F373A","#575C57","#577944","#582531","#58303A","#5E5750","#613C37","#632A2E","#656A64","#6D3430","#704A3E","#7D7F74","#803F31","#826656","#845A45","#8B4D39","#908F7E","#9A6849","#9D9F8C","#AD7E56","#ADB199","#B44F3B","#B87455","#C7B987","#C89363","#CCD1B4","#D37358","#D98265","#E5C17B","#E78F6E","#F6F9D6","#FBB686","#FFC591","#101919","#202C31","#303C3E","#3E4B50","#536E72","#7B8885","#B0B5A2","#DDE0C8","#223A33","#344D3E","#465B46","#647653","#7B8761","#8E7650","#A68B56","#754D40"],"style":"戦国時代を下敷きにした架空の日本。人間と妖怪、荒廃した社寺、竹林、石垣、木造家屋、職人の生活感。低彩度の自然な陰影、硬いピクセル境界、手描き感のある明快なシルエット。12×12菱形マップで判別しやすく、全素材のドット密度を統一。"})
+</script>
+<script>
+window.PIXELFIT_BASELINE_SAKUTARO='data:image/png;base64,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';
 </script>
 <script>
 'use strict';
@@ -346,17 +401,39 @@ ART.paletteGroups.forEach(([group,colors])=>{
  colors.forEach(hex=>{const btn=document.createElement('button');btn.type='button';btn.className='character-swatch';btn.style.backgroundColor=hex;btn.title=`${group} ${hex}（クリックでコピー）`;btn.setAttribute('aria-label',`${hex} をコピー`);btn.onclick=async()=>{try{await navigator.clipboard.writeText(hex);get('swatchStatus').textContent=`${hex} コピー済み`;}catch(e){get('swatchStatus').textContent=`${hex} を手入力してください`}};line.appendChild(btn)});
  wrap.appendChild(line);swatches.appendChild(wrap);
 });
-function generate(){
+function generate(options={}){
  const name=get('assetName').value.trim()||'（素材名を入力）';
- const size=Number(get('assetSize').value),view=views[get('assetView').value];
+ const custom=get('assetSize').value==='custom';
+ const width=custom?Math.max(16,Math.min(1024,Number(get('assetWidth').value)||64)):Number(get('assetSize').value);
+ const height=custom?Math.max(16,Math.min(1024,Number(get('assetHeight').value)||64)):width;
+ const view=views[get('assetView').value];
  const world=worlds[get('assetWorld').value];
  const paletteLimit=get('assetPalette').value;
  const details=get('assetDetails').value.trim();
  const kind=get('assetPreset').value,asset=types[kind]||types.custom;
  const isWafu=get('assetWorld').value==='wafu';
  const isIso=get('assetView').value==='iso';
- const direction=CAMERA_DIRECTIONS[get('cameraDirection').value]||CAMERA_DIRECTIONS.se;
- const locked=get('lockDirection').checked&&isIso;
+ const direction=CAMERA_DIRECTIONS[options.direction||get('cameraDirection').value]||CAMERA_DIRECTIONS.se;
+ const sprite=get('spriteMode').checked;
+ const locked=(get('lockDirection').checked||sprite)&&isIso;
+ const pose=options.pose||'idle';
+ const poseGuides={idle:'待機。自然な直立、両足を接地。',walk_1:'歩行フレーム①。片足を踏み出す。',walk_2:'歩行フレーム②。反対側の足を踏み出す。',attack:'攻撃。装備と動作のシルエットを明確にする。',hit:'被弾。のけぞり・痛みを表現。',defeat:'倒れる。接地基準を維持し、立位身長を強制しない。'};
+ const bodyHeight=Math.max(8,Math.min(512,Number(get('spriteBodyHeight').value)||55));
+ const anchorX=Math.max(0,Math.min(width-1,Number(get('spriteAnchorX').value)||0));
+ const anchorY=Math.max(0,Math.min(height-1,Number(get('spriteAnchorY').value)||0));
+ const fileStem=(name.normalize('NFKC').replace(/[^\p{L}\p{N}_-]+/gu,'_')||'sprite');
+ const filename=fileStem+'_'+pose+'_'+direction.id+'_'+width+'x'+height+'.png';
+ const spriteGuide=sprite?`【スプライト制作：最重要】
+- 納品するのはポーズ「${pose}」・向き「${direction.id}」の画像1枚のみ。
+- ポーズの動作：${poseGuides[pose]||poseGuides.idle}
+- スプライトシート、コマ割り、複数ポーズ、比較画像、設定画は禁止。複数のキャラクターを描かない。
+- ファイル名：${filename}
+- 立位身長${bodyHeight}px（朔太郎55pxの${(bodyHeight/55).toFixed(2)}倍）。角・武器・装飾品は身長に含めない。
+- 接地アンカー：(${anchorX},${anchorY})。全方向・全ポーズで同じアンカーを使用。
+- キャンバス：${width}×${height}px。透明余白を確保し、体・角・武器を切らない。
+- 他のフレームと体格・衣装・装備・配色・光源・ドット密度を一致させる。
+- 生成時は最初からこのゲーム内サイズを想定した粗さで描き、細密画像の無理な縮小を避ける。
+`:'';
  const cameraGuide=locked?`【最重要：固定投影と向き（FRONTIER TACTICS art_standard_v1）】
 - 視点は固定の2D平行投影。Camera3Dは使用しない。画面上の菱形床は幅57.6×高さ36px（比率1.6:1）。通常の64×32px（2:1）タイルへ変更しない。
 - 投影：screen_x=origin_x+(grid_x-grid_y)*28.8、screen_y=origin_y+(grid_x+grid_y)*18.0、origin=(490,126)。水平に対する辺の傾きは約±32度。遠近法・消失点なし。人物や柱は画面に垂直。
@@ -370,22 +447,128 @@ English: FIXED 2D PARALLEL PROJECTION, diamond tile 57.6x36 (1.6:1). Character F
  const colorGuide=paletteLimit==='free'?'色数は必要最小限にし、共通パレットを優先する。':`この素材の不透明ピクセルは最大${paletteLimit}色程度を目標にする（ゲーム全体の64色とは別の上限）。`;
  const paletteText=ART.paletteGroups.map(([group,colors])=>`${group}: ${colors.join(' / ')}`).join('\n');
  const scene=isWafu?`【全素材共通のアート規格／FRONTIER TACTICS】\n- 世界観：${world}\n- 日本の文化・風習・伝承を形や材質に反映する。侍・妖怪・建築・植物・道具を同じ世界のものとして統一する。\n- 視点は既存の固定2D平行投影。床57.6×36px（1.6:1）、地上2軸は画面上の斜め方向、垂直軸は画面垂直。光源は左上。遠近法は禁止。\n- 1ピクセルの情報密度を素材間で揃える。32px絵の単純な4倍拡大と、128pxで細密に描いた絵を無秩序に混ぜない。\n- 基本64色の中から必要な色だけを使う。各素材は12〜24色を目安とし、複雑な大型建築のみ32色程度まで許容。\n- 木・石・布・金属などの材質は原則3〜4色の明暗段階。彩度は抑え、地面より味方ユニットや重要物が見分けやすい明度差を確保。\n- 全素材共通の正式64色 palette_64_v1.json（基準48色＋追加16色、HEX厳守）：\n${paletteText}\n- 可能な限りこの64色以外を追加しない。素材の使用色数が少ない場合は、64色から部分集合を選ぶ。\n`:`【アート規格】\n- ${world}\n- 光源とドット密度を同一ゲーム内の他素材と統一する。\n`;
- return `FRONTIER TACTICS向けゲーム用${asset.role}「${name}」を1点制作してください。\n\n【最重要：納品物】\n- 最終納品は${size}×${size}pxの実寸PNGファイル1点（RGBA、背景アルファ透明）。\n- 文字、設定画、比較表、スプライトシート、チェック柄、額縁、UI、背景、床、別オブジェクトは描かない。\n- 全体をキャンバス内に収め、輪郭を切らず適度な透明余白を残す。
-- 人物64×64の場合、接地アンカーは画像座標(29,57)、頭頂から接地まで55px（頭頂基準Y=2）。4方向と全アニメフレームでアンカーを固定する。武器や帽子の高さを身長に含めない。
-- 木・岩・建物は底面中央を個別アンカーとしてメタデータに記載し、人物アンカー(29,57)を流用しない。\n\n【素材固有の指定】\n- 対象：${name}\n- 種別：${asset.role}\n- 視点：${view}\n${cameraGuide?cameraGuide+'\n':''}- デザイン指針：${asset.extra}\n- ${colorGuide}\n${details?`- 追加指定：${details}\n`:''}\n${scene}\n【ドット絵の品質】\n- ピクセルが1個ずつ判別できるネイティブなドット絵。アンチエイリアス、ぼかし、写真調の質感、連続グラデーションは禁止。\n- 1px単位で編集できる、整理されたシルエットと陰影。\n- 戦術ゲームの12×12菱形マップに並べたときに識別できる。\n\n【制作・検査】\n1. 単体のゲーム素材として設計する。\n2. AIの出力が${size}×${size}pxでなければ、最近傍補間を使って実寸PNGへ変換する。縮小で重要な形が潰れたら輪郭を修正する。\n3. 市松模様が焼き込まれていないか確認し、背景を透明化する。\n4. PNGをプログラムで開き、${size}×${size}px・RGBA・透明背景・使用色数・半透明画素を検査する。透明RGBは不問、アルファは0/255のみ。\n5. Codex正式64色以外の色があれば不適合として報告する。自動置換はしない。新規候補で明示的に承認された場合のみ色変換する。\n6. 完成PNGをファイルとして渡す。\n\n【次の工程】\nPixelFit Studioでアンカーガイド・55px身長ガイド・正式64色検査を行い、1px単位で手描き修正する。Godot確認シーンで方向と床との整合を目視確認し、承認後に本編登録する。既存採用済みPNGは上書きしない。`;
+ return `MONONOKE FRONTIER向けゲーム用${asset.role}「${name}」を1点制作してください。\n\n【最重要：納品物】\n- 最終納品は${width}×${height}pxの実寸PNGファイル1点（RGBA、背景アルファ透明）。\n- 文字、設定画、比較表、スプライトシート、チェック柄、額縁、UI、背景、床、別オブジェクトは描かない。\n- 全体をキャンバス内に収め、輪郭を切らず適度な透明余白を残す。
+- ${sprite?`この人物の接地アンカーは(${anchorX},${anchorY})、立位身長は${bodyHeight}px。全ポーズ・全方向で接地基準を固定する。`:'基準人物64×64の接地アンカーは(29,57)、立位身長55px。別サイズでは個別に設定する。'} 武器や帽子・角は立位身長に含めない。
+- 木・岩・建物は底面中央を個別アンカーとしてメタデータに記載し、人物アンカー(29,57)を流用しない。\n\n${spriteGuide}
+【素材固有の指定】\n- 対象：${name}\n- 種別：${asset.role}\n- 視点：${view}\n${cameraGuide?cameraGuide+'\n':''}- デザイン指針：${asset.extra}\n- ${colorGuide}\n${details?`- 追加指定：${details}\n`:''}\n${scene}\n【ドット絵の品質】\n- ピクセルが1個ずつ判別できるネイティブなドット絵。アンチエイリアス、ぼかし、写真調の質感、連続グラデーションは禁止。\n- 1px単位で編集できる、整理されたシルエットと陰影。\n- 戦術ゲームの12×12菱形マップに並べたときに識別できる。\n\n【制作・検査】\n1. 単体のゲーム素材として設計する。\n2. AIの出力が${width}×${height}pxでなければ、最近傍補間を使って実寸PNGへ変換する。縮小で重要な形が潰れたら輪郭を修正する。\n3. 市松模様が焼き込まれていないか確認し、背景を透明化する。\n4. PNGをプログラムで開き、${width}×${height}px・RGBA・透明背景・使用色数・半透明画素を検査する。透明RGBは不問、アルファは0/255のみ。\n5. Codex正式64色以外の色があれば不適合として報告する。自動置換はしない。新規候補で明示的に承認された場合のみ色変換する。\n6. 完成PNGをファイルとして渡す。\n\n【次の工程】\nPixelFit Studioでアンカー・相対身長・正式64色検査を行い、1px単位で手描き修正する。Godot確認シーンで方向と床との整合を目視確認し、承認後に本編登録する。既存採用済みPNGは上書きしない。`;
 }
 function update(){
  const iso=get('assetView').value==='iso';
  get('cameraDirection').disabled=!iso;
  get('lockDirection').disabled=!iso;
  get('cameraDirectionHelp').textContent=!iso?'斜め見下ろし以外ではfacing指定を適用しません。':get('lockDirection').checked?'固定2D投影は変えず、キャラのfacingのみ指定します。設定は素材プリセットを変えても保持します。':'facing明記がオフです。生成画像の向きは必ず目視確認してください。';
+ get('spriteCustomSize').hidden=get('assetSize').value!=='custom';
+ get('spriteOptions').style.opacity=get('spriteMode').checked?'1':'.5';
  get('generatedPrompt').value=generate();
+ drawSpriteScale();
  get('promptStatus').textContent=iso&&get('lockDirection').checked?'Codex正式アート規格＋facingを反映しました':'Codex正式アート規格を反映しました';
 }
-function setPreset(){const type=types[get('assetPreset').value]||types.custom;get('assetName').value=type.name;get('assetSize').value=type.size;get('assetView').value='iso';get('assetWorld').value='wafu';get('assetPalette').value=type.colors;get('assetDetails').value='';update()}
+function setPreset(){const type=types[get('assetPreset').value]||types.custom;get('assetName').value=type.name;get('assetSize').value=type.size;get('assetWidth').value=type.size;get('assetHeight').value=type.size;get('spriteBodyHeight').value=type.size==='64'?55:Math.round(Number(type.size)*.66);get('spriteAnchorX').value=type.size==='64'?29:Math.floor(Number(type.size)/2);get('spriteAnchorY').value=Number(type.size)-7;get('assetView').value='iso';get('assetWorld').value='wafu';get('assetPalette').value=type.colors;get('assetDetails').value='';update()}
 get('assetPreset').addEventListener('change',setPreset);
-['assetName','assetDetails'].forEach(id=>get(id).addEventListener('input',update));
-['assetSize','assetView','assetWorld','assetPalette'].forEach(id=>get(id).addEventListener('change',update));
+['assetName','assetDetails','assetWidth','assetHeight','spriteBodyHeight','spriteAnchorX','spriteAnchorY'].forEach(id=>get(id).addEventListener('input',update));
+['assetSize','assetView','assetWorld','assetPalette','spriteMode'].forEach(id=>get(id).addEventListener('change',update));
+get('assetSize').addEventListener('change',()=>{
+ if(get('assetSize').value!=='custom'){
+   const n=Number(get('assetSize').value);get('assetWidth').value=n;get('assetHeight').value=n;
+   get('spriteAnchorX').value=n===64?29:Math.floor(n/2);get('spriteAnchorY').value=n===64?57:n-7;
+ }
+ update();
+});
+['assetWidth','assetHeight'].forEach(id=>get(id).addEventListener('input',()=>{
+ if(get('assetSize').value==='custom'){
+   const w=Math.max(16,Number(get('assetWidth').value)||64),h=Math.max(16,Number(get('assetHeight').value)||64);
+   get('spriteAnchorX').value=Math.floor(w/2);get('spriteAnchorY').value=h-7;
+   update();
+ }
+}));
+get('spriteAllFacings').addEventListener('change',update);
+const checkedPoses=()=>[...document.querySelectorAll('#spritePoseChecks input:checked')].map(e=>e.value);
+let spritePrompts=[];
+get('spriteBuildBatch').addEventListener('click',()=>{
+ if(!get('spriteMode').checked)get('spriteMode').checked=true;
+ const poses=checkedPoses();if(!poses.length){get('promptStatus').textContent='ポーズを1つ以上選んでください';return}
+ const directions=get('spriteAllFacings').checked?['sw','se','ne','nw']:[get('cameraDirection').value];
+ spritePrompts=[];
+ for(const pose of poses)for(const dir of directions){
+   spritePrompts.push({label:pose+' / '+CAMERA_DIRECTIONS[dir].id,prompt:generate({pose,direction:dir})});
+ }
+ const list=get('spritePromptList');list.replaceChildren();
+ spritePrompts.forEach((p,i)=>{const option=document.createElement('option');option.value=String(i);option.textContent=(i+1)+'. '+p.label;list.appendChild(option)});
+ list.disabled=false;list.value='0';get('spriteBatchDownload').disabled=false;
+ get('generatedPrompt').value=spritePrompts[0].prompt;
+ get('promptStatus').textContent=spritePrompts.length+'件の独立プロンプトを生成しました。各項目を選択して1枚ずつ生成してください。';
+});
+get('spritePromptList').addEventListener('change',()=>{
+ const p=spritePrompts[Number(get('spritePromptList').value)];if(p)get('generatedPrompt').value=p.prompt;
+});
+get('spriteBatchDownload').addEventListener('click',()=>{
+ if(!spritePrompts.length)return;
+ const txt=spritePrompts.map((p,i)=>'===== '+(i+1)+' / '+p.label+' =====\n'+p.prompt).join('\n\n');
+ const url=URL.createObjectURL(new Blob(['\ufeff'+txt],{type:'text/plain;charset=utf-8'}));
+ const a=document.createElement('a');a.href=url;a.download='mononoke_sprite_prompts.txt';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+});
+let referenceImage=null,candidateImage=null;
+function readSpriteImage(input,callback){
+ const file=input.files&&input.files[0];if(!file){callback(null);drawSpriteScale();return}
+ const url=URL.createObjectURL(file),img=new Image();
+ img.onload=()=>{URL.revokeObjectURL(url);callback(img);drawSpriteScale()};
+ img.onerror=()=>{URL.revokeObjectURL(url);get('spriteScaleStatus').textContent='PNGの読込に失敗しました'};
+ img.src=url;
+}
+get('spriteReferenceFile').addEventListener('change',e=>readSpriteImage(e.target,img=>referenceImage=img));
+get('spriteCandidateFile').addEventListener('change',e=>readSpriteImage(e.target,img=>candidateImage=img));
+function spriteBounds(img){
+ if(!img)return null;
+ const cv=document.createElement('canvas');cv.width=img.width;cv.height=img.height;
+ const ct=cv.getContext('2d',{willReadFrequently:true});ct.drawImage(img,0,0);
+ const data=ct.getImageData(0,0,cv.width,cv.height).data;
+ let x0=img.width,y0=img.height,x1=-1,y1=-1;
+ for(let y=0;y<img.height;y++)for(let x=0;x<img.width;x++){
+  if(data[(y*img.width+x)*4+3]===0)continue;
+  x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);
+ }
+ return x1<0?null:{x0,y0,x1,y1,width:x1-x0+1,height:y1-y0+1};
+}
+function drawSpriteScale(){
+ const canvas=get('spriteScalePreview'),ctx=canvas.getContext('2d');
+ if(!canvas||!ctx)return;
+ const custom=get('assetSize').value==='custom';
+ const width=custom?Number(get('assetWidth').value)||64:Number(get('assetSize').value);
+ const height=custom?Number(get('assetHeight').value)||64:width;
+ const body=Math.max(8,Number(get('spriteBodyHeight').value)||55);
+ const ax=Number(get('spriteAnchorX').value)||0,ay=Number(get('spriteAnchorY').value)||0;
+ const refB=spriteBounds(referenceImage),candB=spriteBounds(candidateImage);
+ const refAbove=refB?57-refB.y0:55,candAbove=candB?ay-candB.y0:body;
+ const refBelow=refB?refB.y1-57:0,candBelow=candB?candB.y1-ay:0;
+ const above=Math.max(55,body,refAbove,candAbove),below=Math.max(0,refBelow,candBelow);
+ const scale=Math.min(3,250/Math.max(above,1),35/Math.max(below,1));
+ const baseline=286,centers=[265,735];
+ ctx.fillStyle='#0c151b';ctx.fillRect(0,0,canvas.width,canvas.height);
+ ctx.imageSmoothingEnabled=false;
+ ctx.strokeStyle='#50746e';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(35,baseline+.5);ctx.lineTo(965,baseline+.5);ctx.stroke();
+ function render(cx,img,anchorX,anchorY,bodyPx,color,label){
+   if(img){ctx.drawImage(img,Math.round(cx-anchorX*scale),Math.round(baseline-anchorY*scale),img.width*scale,img.height*scale)}
+   else{
+     const w=Math.max(12,bodyPx*.34)*scale,h=bodyPx*scale;
+     ctx.fillStyle=color;ctx.fillRect(cx-w/2,baseline-h,w,h);
+     ctx.fillStyle='#0c151b';ctx.fillRect(cx-w/2+3,baseline-h+3,Math.max(0,w-6),Math.max(0,h-6));
+   }
+   ctx.strokeStyle=color;ctx.lineWidth=1;
+   ctx.beginPath();ctx.moveTo(cx-65,baseline-bodyPx*scale+.5);ctx.lineTo(cx+65,baseline-bodyPx*scale+.5);ctx.stroke();
+   ctx.fillStyle='#f0d88c';ctx.fillRect(cx-2,baseline-2,4,4);
+   ctx.textAlign='center';ctx.fillStyle='#dce8ee';ctx.font='17px system-ui';ctx.fillText(label,cx,26);
+ }
+ render(centers[0],referenceImage,29,57,55,'#7cb9a5','朔太郎 / 55px');
+ render(centers[1],candidateImage,ax,ay,body,'#d6a071','制作対象 / '+body+'px');
+ ctx.fillStyle='#a7bdc8';ctx.font='15px system-ui';ctx.textAlign='center';
+ ctx.fillText('身長比 '+(body/55).toFixed(2)+'倍　|　共通表示倍率 '+scale.toFixed(2)+'×',500,322);
+ const actual=candB?' ／ 実際の不透明領域 '+candB.width+'×'+candB.height+'px':' ／ 対象画像未読込（ガイド表示）';
+ get('spriteScaleStatus').textContent='基準55px → 対象'+body+'px（'+(body/55).toFixed(2)+'倍）／ キャンバス '+width+'×'+height+'px ／ 接地('+ax+','+ay+')'+actual;
+}
+const baselineImg=new Image();
+baselineImg.onload=()=>{referenceImage=baselineImg;drawSpriteScale()};
+baselineImg.src=window.PIXELFIT_BASELINE_SAKUTARO;
+
 try{
  const saved=JSON.parse(localStorage.getItem('pixelfit_camera_lock_v18')||'null');
  if(saved&&CAMERA_DIRECTIONS[saved.direction])get('cameraDirection').value=saved.direction;
@@ -590,8 +773,8 @@ el('convertDownload').onclick=()=>{
  el('downloadArtMeta').addEventListener('click',()=>{
    const dir=el('cameraDirection').value;
    const dirs={se:'down_right',sw:'down_left',ne:'up_right',nw:'up_left'};
-   const isPerson=el('assetPreset').value==='saku'||el('assetPreset').value==='npc';
-   const meta={projection:'frontier_1p6_v1',palette:'frontier_shared_64_v1',canvas_px:[w,h],anchor_px:isPerson&&w===64&&h===64?[29,57]:null,facing:el('assetView').value==='iso'?(isPerson?dirs[dir]:'fixed'):'unspecified',scale:1.0,filter:'Nearest',note:isPerson?'人物は頭頂から接地まで55px。画像の向きと接地はGodotで要確認。':'接地面中央アンカーと占有範囲は素材ごとに設定すること。'};
+   const isPerson=el('assetPreset').value==='saku'||el('assetPreset').value==='npc'||el('assetPreset').value==='yokai'||el('spriteMode').checked;
+   const meta={projection:'frontier_1p6_v1',palette:'frontier_shared_64_v1',canvas_px:[w,h],anchor_px:isPerson?[Math.max(0,Number(el('spriteAnchorX').value)||0),Math.max(0,Number(el('spriteAnchorY').value)||0)]:null,facing:el('assetView').value==='iso'?(isPerson?dirs[dir]:'fixed'):'unspecified',scale:1.0,filter:'Nearest',note:isPerson?'基準キャラ55px。制作対象の身長は個別設定。画像の向きと接地はGodotで要確認。':'接地面中央アンカーと占有範囲は素材ごとに設定すること。'};
    const blob=new Blob([JSON.stringify(meta,null,2)],{type:'application/json;charset=utf-8'});
    const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='frontier_art_metadata.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500);
  });
