@@ -55,8 +55,15 @@ main#editorMain{max-width:1400px;margin:0 auto;display:grid;grid-template-column
 .update-content{padding:10px 6px 16px}.update-content h3{margin:0 0 6px}.update-fields{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:7px;align-items:end}
 .update-fields label{grid-column:1/-1;margin:0}.update-fields input{min-width:0;width:100%;background:#101721;color:#edf4fb;border:1px solid #415265;border-radius:7px;padding:10px}
 @media(max-width:850px){.world-swatches{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:500px){.update-fields{grid-template-columns:1fr}.world-swatches{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style><style>
+.art-compliance{margin:12px 0 18px;padding:14px;border:1px solid #355f5a;border-radius:10px;background:#14272a}
+.art-compliance-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.art-compliance-head h3{margin:0 0 7px;font-size:14px}
+.art-guide-toggle{display:flex;align-items:center;gap:7px;color:#bde3d7;font-size:12px;cursor:pointer}
+.art-compliance-actions{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.art-compliance-actions button{font-size:12px}
+.art-validation-report{font-size:12px;line-height:1.7;background:#101c23;border:1px solid #344850;padding:11px;border-radius:7px;white-space:pre-wrap;word-break:break-word}
+.art-validation-report[data-result="pass"]{border-color:#427a64}.art-validation-report[data-result="fail"]{border-color:#a56c56}
 </style></head><body>
-<header><div><h1>PixelFit <span style="color:#6ed9bd">Studio</span> <span class="badge">v1.8 / カメラ方向ロック</span></h1><small>ドット絵を描き直さず、1px単位で形を整える</small></div><div class="buttons"><button id="reset">元に戻す</button><button id="undo">↶ Undo</button><button id="redo">↷ Redo</button><button class="primary" id="export">PNGを書き出す</button></div></header>
+<header><div><h1>PixelFit <span style="color:#6ed9bd">Studio</span> <span class="badge">v1.9 / FRONTIER 正式アート規格</span></h1><small>ドット絵を描き直さず、1px単位で形を整える</small></div><div class="buttons"><button id="reset">元に戻す</button><button id="undo">↶ Undo</button><button id="redo">↷ Redo</button><button class="primary" id="export">PNGを書き出す</button></div></header>
 <main id="editorMain">
 <aside class="controls">
  <div class="controls-head"><h2>編集ツール</h2><span class="muted">画像を見ながら調整</span></div>
@@ -85,6 +92,7 @@ main#editorMain{max-width:1400px;margin:0 auto;display:grid;grid-template-column
   <div class="toolbar tool-select"><button id="moveTool" class="active">✥ 移動</button><button id="brush">ペン</button><button id="eraser">消しゴム</button><button id="pick">スポイト</button></div>
   <div class="inline-paint"><label for="color">色 <input type="color" id="color" value="#8b644c"></label><div><label for="size">ペン <span id="sizeLabel">1px</span></label><input id="size" type="range" min="1" max="5" value="1"></div></div>
   <div class="check-row"><label><input id="grid" type="checkbox"> グリッド</label><label><input id="guides" type="checkbox"> 領域ガイド</label></div>
+ <p class="muted">※正式64色に含まれない色をペンで塗ると、規格チェックで検出します。</p>
  </section>
  <details class="advanced"><summary>詳細設定（領域別の体格調整）</summary>
   <p class="muted">元画像を頭・胴体・脚の3領域に分けて調整します。適用すると現在の手描き編集は置き換わります。</p>
@@ -102,15 +110,21 @@ main#editorMain{max-width:1400px;margin:0 auto;display:grid;grid-template-column
 </aside>
 <section class="panel workspace">
  <div class="workspace-top"><div><h2>編集中の画像</h2><p class="muted">キャラクターから大木まで、実寸キャンバスを編集できます。</p></div><div class="canvas-info" id="outStat"></div></div>
- <div class="main-canvas-wrap"><div class="viewport edit-viewport"><canvas id="result" width="64" height="64"></canvas></div></div>
+ <div class="main-canvas-wrap"><div class="viewport edit-viewport" style="position:relative"><canvas id="result" width="64" height="64"></canvas><canvas id="artGuideOverlay" width="64" height="64" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;image-rendering:pixelated"></canvas></div></div>
  <div id="msg" class="status editor-message" role="status"></div>
+ <section class="art-compliance" id="artCompliance" aria-labelledby="artComplianceTitle">
+ <div class="art-compliance-head"><h3 id="artComplianceTitle">FRONTIER TACTICS 規格チェック <span class="badge">art_standard_v1</span></h3><label class="art-guide-toggle"><input type="checkbox" id="showArtGuides" checked> アンカー・身長ガイド</label></div>
+ <p class="muted">人物64×64：接地アンカー <strong>(29,57)</strong> ／ 頭頂〜接地 <strong>55px</strong>（参考Y=2）。ガイドは表示専用でPNGに書き込みません。建物・樹木にはこの人物用アンカーを適用しません。</p>
+ <div class="art-compliance-actions"><button type="button" id="validateArt" class="primary">現在のPNGを検査</button><button type="button" id="quantizeArt">正式64色に置換（新規候補のみ）</button><button type="button" id="downloadArtMeta">素材メタデータJSON</button></div>
+ <div id="artValidationReport" class="art-validation-report" role="status">「現在のPNGを検査」でサイズ・アルファ・色数・パレットを確認できます。</div>
+ </section>
  <div class="reference-bar"><div class="mini-preview"><div class="mini-text"><strong>比較用画像</strong><span id="refStat" class="muted"></span></div><div class="viewport"><canvas id="reference" width="64" height="64"></canvas></div></div>
  <div class="mini-preview"><div class="mini-text"><strong>編集前の画像</strong><span id="srcStat" class="muted"></span></div><div class="viewport"><canvas id="source" width="64" height="64"></canvas></div></div>
  <div class="workspace-help"><strong>使い方</strong><p>左で倍率・位置を調整 → 大きなプレビューで確認 → 「変更を確定」 → PNG保存。画像上をドラッグすると移動、ペンを選ぶと1ドットずつ描けます。</p><p>倍率変更は最近傍補間。キャンバスサイズは左の「キャンバスのサイズ」で変更できます。</p></div></div>
 </section>
 </main><section class="extra-tools"><h2>その他のツール</h2><p class="muted">普段の画像編集には不要な機能は折りたたんでいます。</p>
 <details><summary>画像をドット絵に変換する（共通64色対応）</summary><section class="prompt-maker" id="spriteConverter">
-<h2>画像 → ドット絵変換 <span class="badge">共通64色に対応</span></h2>
+<h2>画像 → ドット絵変換 <span class="badge">正式64色対応</span></h2>
 <p class="muted">ChatGPTで生成した大きな画像を読み込み、背景処理・切り抜き・最近傍縮小して、そのまま編集画面に送れます。処理はブラウザ内で完結します。</p>
 <div class="convert-layout">
 <div>
@@ -121,7 +135,7 @@ main#editorMain{max-width:1400px;margin:0 auto;display:grid;grid-template-column
 </div>
 <div class="group"><label for="convertBackground">背景の扱い</label><select id="convertBackground"><option value="auto">自動（透明なら維持／不透明なら四隅から背景除去）</option><option value="keep">そのまま（元のアルファを維持）</option><option value="corners">四隅につながる同系色を透明化</option></select></div>
 <div class="group"><label for="convertTolerance">背景色の許容差 <span id="convertToleranceValue">28</span></label><input type="range" id="convertTolerance" min="0" max="100" value="28"></div>
-<div class="group"><label for="convertPalette">色数</label><select id="convertPalette"><option value="0">元の色を維持</option><option value="16">16色程度に削減</option><option value="32">32色程度に削減</option><option value="64">64色程度に削減</option><option value="shared64">ゲーム共通64色に置換</option></select></div>
+<div class="group"><label for="convertPalette">色数</label><select id="convertPalette"><option value="0">元の色を維持</option><option value="16">16色程度に削減</option><option value="32">32色程度に削減</option><option value="64">64色程度に削減</option><option value="shared64">Codex正式64色に置換（明示的に選択）</option></select></div>
 <div class="buttons"><button id="convertRun" class="primary">ドット絵へ変換</button><button id="convertToEditor" disabled>編集画面へ送る</button><button id="convertDownload" disabled>透過PNG保存</button></div>
 <div id="convertStatus" class="status" role="status">画像を選択してください</div>
 <p class="muted">※背景と被写体の色が似ている場合、背景の自動除去は失敗することがあります。変換プレビューを確認し、必要なら許容差を調整してください。市松模様が画像自体に焼き込まれている場合は完全除去を保証できません。</p>
@@ -129,8 +143,8 @@ main#editorMain{max-width:1400px;margin:0 auto;display:grid;grid-template-column
 <div class="convert-preview"><div class="title">変換結果（拡大プレビュー）</div><div class="viewport"><canvas id="convertCanvas" width="64" height="64"></canvas></div><div id="convertStats" class="status"></div></div>
 </div>
 </section></details><details id="aiPromptPanel"><summary>AI素材のプロンプトを作る（全素材共通アート規格）</summary><section class="prompt-maker" aria-labelledby="promptTitle">
-<h2 id="promptTitle">AI素材プロンプト生成 <span class="badge">共通64色パレット</span></h2>
-<p class="muted">FRONTIER TACTICSの主人公・妖怪・建物・自然物に共通する世界観、64色パレット、ドット密度、光源を自動でプロンプトに反映します。</p>
+<h2 id="promptTitle">AI素材プロンプト生成 <span class="badge">Codex正式64色＋固定2D投影</span></h2>
+<p class="muted">Codexのart_standard_v1に合わせ、57.6×36の床、固定2D投影、facing、(29,57)アンカー、正式64色を生成文に反映します。</p>
 <div class="prompt-grid">
 <div class="prompt-controls">
 <div class="wide"><label for="assetPreset">生成プリセット</label><select id="assetPreset"><option value="saku">主人公・榊 朔太郎（宮大工の息子）</option><option value="yokai">妖怪・敵キャラクター</option><option value="npc">仲間・NPC</option><option value="building">和風建築・廃墟</option><option value="tree">木・竹・植物</option><option value="rock">岩・石垣・鉱石</option><option value="terrain">地形・マップ素材</option><option value="custom">自由素材（世界観共通）</option></select></div>
@@ -138,20 +152,20 @@ main#editorMain{max-width:1400px;margin:0 auto;display:grid;grid-template-column
 <div><label for="assetSize">完成キャンバス</label><select id="assetSize"><option value="64">64 × 64 px</option><option value="32">32 × 32 px</option><option value="96">96 × 96 px</option><option value="128">128 × 128 px</option><option value="192">192 × 192 px</option><option value="256">256 × 256 px</option></select></div>
 <div><label for="assetView">視点</label><select id="assetView"><option value="iso">斜め見下ろし（3/4ビュー）</option><option value="top">真上からの見下ろし</option><option value="side">横向き</option><option value="front">正面</option></select></div>
 <div class="wide" id="cameraLockGroup" style="border:1px solid #42675f;border-radius:9px;padding:12px;background:#152b2a">
-<label for="cameraDirection" style="font-weight:700;color:#8de2c8">カメラ方向ロック（全素材共通）</label>
+<label for="cameraDirection" style="font-weight:700;color:#8de2c8">キャラクターの向き facing（固定2D投影）</label>
 <select id="cameraDirection">
-<option value="se">画面右下から見る／キャラ右下向き【共通基準】</option>
-<option value="sw">画面左下から見る／キャラ左下向き</option>
-<option value="ne">画面右上から見る／キャラ右上向き</option>
-<option value="nw">画面左上から見る／キャラ左上向き</option>
+<option value="se">down_right / 右下（+1,0）</option>
+<option value="sw">down_left / 左下（0,+1）</option>
+<option value="ne">up_right / 右上（0,-1）</option>
+<option value="nw">up_left / 左上（-1,0）</option>
 </select>
-<label style="display:flex;gap:9px;align-items:center;margin-top:10px;cursor:pointer"><input id="lockDirection" type="checkbox" checked style="width:18px;height:18px;accent-color:#61c2ad"><span>方向を固定してプロンプトに強制反映</span></label>
-<p id="cameraDirectionHelp" class="muted" style="margin:7px 0 0">全素材に同じカメラ方向を指定。向きの反転・カメラ回転を禁止します。</p>
+<label style="display:flex;gap:9px;align-items:center;margin-top:10px;cursor:pointer"><input id="lockDirection" type="checkbox" checked style="width:18px;height:18px;accent-color:#61c2ad"><span>選択したfacingをプロンプトに明記</span></label>
+<p id="cameraDirectionHelp" class="muted" style="margin:7px 0 0">カメラは常に固定。選択するのはキャラの向きだけです。</p>
 </div>
 <div><label for="assetWorld">世界観・画風</label><select id="assetWorld"><option value="wafu">FRONTIER TACTICS／戦国妖怪ファンタジー</option><option value="frontier">FRONTIER TACTICS／中世ファンタジー</option><option value="ruins">転生ローグライク／現実的な廃墟</option><option value="neutral">汎用レトロRPG</option></select></div>
 <div><label for="assetPalette">色数の目安</label><select id="assetPalette"><option value="12">最大12色程度</option><option value="16">最大16色程度</option><option value="20">最大20色程度</option><option value="24">最大24色程度</option><option value="32">最大32色程度</option><option value="free">指定なし</option></select></div>
 <div class="wide"><label for="assetDetails">追加の希望（任意）</label><input id="assetDetails" type="text" placeholder="例：手拭いを巻く、木槌を肩に担ぐ、歩行前の待機姿勢" maxlength="400"></div>
-<div class="wide"><div class="prompt-palette-heading"><label>FRONTIER TACTICS 共通64色パレット</label><span id="swatchStatus" class="muted"></span></div><p class="muted">全素材で同じ64色から必要な色を選択。各素材は原則12〜24色、大型建築は最大32色。色見本をクリックするとHEXコードをコピーできます。</p><div id="characterSwatches" class="world-swatches" aria-label="全素材共通64色パレット"></div><p class="muted">※64色はゲーム全体の候補色。1素材で64色すべて使う意味ではありません。主人公の旧16色はこの64色に含まれています。</p></div>
+<div class="wide"><div class="prompt-palette-heading"><label>FRONTIER TACTICS 共通64色パレット</label><span id="swatchStatus" class="muted"></span></div><p class="muted">Codex正式64色（基準48色＋追加16色）。新規候補用。クリックでHEXコピー。既存採用済みPNGは変更しません。</p><div id="characterSwatches" class="world-swatches" aria-label="全素材共通64色パレット"></div><p class="muted">Codex確定 palette_64_v1.json に完全一致（基準キャラ48色＋追加16色）。既存採用素材の色を自動変更しません。</p></div>
 </div>
 <div><label for="generatedPrompt">ChatGPTに渡すプロンプト（自動生成・直接編集も可能）</label><textarea id="generatedPrompt" spellcheck="false" aria-live="polite"></textarea>
 <div class="actions"><button class="primary" id="copyPrompt" type="button">プロンプトをコピー</button><button id="downloadPrompt" type="button">TXTで保存</button><button id="restorePrompt" type="button">条件から再生成</button></div>
@@ -165,7 +179,7 @@ main#editorMain{max-width:1400px;margin:0 auto;display:grid;grid-template-column
 <div id="updateStatus" class="status" role="status"></div><p class="muted">公開URLが未設定の場合は、まずGitHub Pagesに設置してください。編集中の画像はページ移動で消える場合があるため、PNG保存後にオンライン版を開いてください。</p></div></details></section><footer>PixelFit Studio · オフライン動作 / サーバー送信なし / ブラウザのCanvas API使用</footer>
 <script>
 'use strict';
-window.PIXELFIT_ART=Object.freeze({version:'1.7',paletteGroups:[["輪郭・最暗部", ["#24282B", "#292724", "#3A3634", "#514536"]], ["藍染め・衣服", ["#26343A", "#405E69", "#70818A", "#9AA4A1"]], ["革・道具", ["#584939", "#8B6B4B", "#B99A72", "#D7C8A7"]], ["肌・人間", ["#775745", "#B48C6C", "#D2B38D", "#E7CEAA"]], ["金属・刃物", ["#39484B", "#5B6667", "#87918E", "#C4C8B8"]], ["石・瓦礫", ["#454B49", "#656962", "#858679", "#AAA999"]], ["古木・梁", ["#47372F", "#684935", "#906544", "#B88A5B"]], ["土壁・漆喰", ["#655F55", "#938675", "#C2AC83", "#E4D7B6"]], ["土・道", ["#4C4035", "#735D47", "#A08665", "#C4AE87"]], ["森・苔", ["#303F34", "#4B6040", "#718254", "#9AAA6C"]], ["竹・若葉", ["#3E523A", "#64744B", "#89936A", "#B7B88A"]], ["朱・錆・鬼", ["#5E3735", "#824B40", "#A46C4E", "#C08D6A"]], ["水・湿地", ["#243D44", "#3D6066", "#648387", "#92A9A1"]], ["妖気・夜", ["#3B3F57", "#646585", "#8B92A9", "#C1B6B0"]], ["灯火・護符", ["#645039", "#987047", "#D1B57C", "#E5D3A0"]], ["紙・白木", ["#6D6B61", "#A09B8A", "#D1C8B1", "#E7DDC9"]]],palette:["#24282B", "#292724", "#3A3634", "#514536", "#26343A", "#405E69", "#70818A", "#9AA4A1", "#584939", "#8B6B4B", "#B99A72", "#D7C8A7", "#775745", "#B48C6C", "#D2B38D", "#E7CEAA", "#39484B", "#5B6667", "#87918E", "#C4C8B8", "#454B49", "#656962", "#858679", "#AAA999", "#47372F", "#684935", "#906544", "#B88A5B", "#655F55", "#938675", "#C2AC83", "#E4D7B6", "#4C4035", "#735D47", "#A08665", "#C4AE87", "#303F34", "#4B6040", "#718254", "#9AAA6C", "#3E523A", "#64744B", "#89936A", "#B7B88A", "#5E3735", "#824B40", "#A46C4E", "#C08D6A", "#243D44", "#3D6066", "#648387", "#92A9A1", "#3B3F57", "#646585", "#8B92A9", "#C1B6B0", "#645039", "#987047", "#D1B57C", "#E5D3A0", "#6D6B61", "#A09B8A", "#D1C8B1", "#E7DDC9"],style:'戦国時代を下敷きにした架空の日本。人間と妖怪、荒廃した社寺、竹林、石垣、木造家屋、職人の生活感。落ち着いた低彩度アースカラー。左上光源、3〜4段階のベタ塗り陰影、硬いピクセル境界、手描き感のある明快なシルエット。12×12菱形マップで判別しやすく、全素材のドット密度を統一。'});
+window.PIXELFIT_ART=Object.freeze({"version":"1.9","paletteId":"frontier_shared_64_v1","paletteGroups":[["基準キャラ色 1",["#000012","#010015","#07031C","#1C102C","#29233F","#2A1834","#312D44","#361D2F"]],["基準キャラ色 2",["#3C3E4F","#3D223C","#3F2D41","#454E54","#46333D","#4A2135","#4B6148","#4F373A"]],["基準キャラ色 3",["#575C57","#577944","#582531","#58303A","#5E5750","#613C37","#632A2E","#656A64"]],["基準キャラ色 4",["#6D3430","#704A3E","#7D7F74","#803F31","#826656","#845A45","#8B4D39","#908F7E"]],["基準キャラ色 5",["#9A6849","#9D9F8C","#AD7E56","#ADB199","#B44F3B","#B87455","#C7B987","#C89363"]],["基準キャラ色 6",["#CCD1B4","#D37358","#D98265","#E5C17B","#E78F6E","#F6F9D6","#FBB686","#FFC591"]],["追加材質色 1",["#101919","#202C31","#303C3E","#3E4B50","#536E72","#7B8885","#B0B5A2","#DDE0C8"]],["追加材質色 2",["#223A33","#344D3E","#465B46","#647653","#7B8761","#8E7650","#A68B56","#754D40"]]],"palette":["#000012","#010015","#07031C","#1C102C","#29233F","#2A1834","#312D44","#361D2F","#3C3E4F","#3D223C","#3F2D41","#454E54","#46333D","#4A2135","#4B6148","#4F373A","#575C57","#577944","#582531","#58303A","#5E5750","#613C37","#632A2E","#656A64","#6D3430","#704A3E","#7D7F74","#803F31","#826656","#845A45","#8B4D39","#908F7E","#9A6849","#9D9F8C","#AD7E56","#ADB199","#B44F3B","#B87455","#C7B987","#C89363","#CCD1B4","#D37358","#D98265","#E5C17B","#E78F6E","#F6F9D6","#FBB686","#FFC591","#101919","#202C31","#303C3E","#3E4B50","#536E72","#7B8885","#B0B5A2","#DDE0C8","#223A33","#344D3E","#465B46","#647653","#7B8761","#8E7650","#A68B56","#754D40"],"style":"戦国時代を下敷きにした架空の日本。人間と妖怪、荒廃した社寺、竹林、石垣、木造家屋、職人の生活感。低彩度の自然な陰影、硬いピクセル境界、手描き感のある明快なシルエット。12×12菱形マップで判別しやすく、全素材のドット密度を統一。"})
 </script>
 <script>
 'use strict';
@@ -305,13 +319,13 @@ preset();loadImage(demoSrc,'src');setTimeout(()=>loadImage(demoRef,'ref'),80);
 (function(){
 const get=id=>document.getElementById(id);
 const ART=window.PIXELFIT_ART;
-const views={iso:'斜め見下ろし（3/4ビュー）。キャラは頭と正面・片側面、建物は屋根と正面・側面が見える。菱形マップに適した同じ向き。',top:'真上からの2D見下ろし',side:'横向き',front:'正面'};
+const views={iso:'既存Godot盤面と同じ固定2D平行投影（床57.6×36px、1.6:1）。キャラは頭頂と正面・片側面、建物は屋根と正面・側面が見える。カメラは回さない。',top:'真上からの2D見下ろし',side:'横向き',front:'正面'};
 const CAMERA_DIRECTIONS={
- se:{jp:'画面右下（↘）',en:'screen-bottom-right / southeast',walls:'屋根と手前側・右側の壁面'},
- sw:{jp:'画面左下（↙）',en:'screen-bottom-left / southwest',walls:'屋根と手前側・左側の壁面'},
- ne:{jp:'画面右上（↗）',en:'screen-top-right / northeast',walls:'屋根と奥側・右側の壁面'},
- nw:{jp:'画面左上（↖）',en:'screen-top-left / northwest',walls:'屋根と奥側・左側の壁面'}
-};
+ se:{id:'down_right',jp:'画面右下（↘）',delta:'(+1,0)',screen:'(+28.8,+18)',atlas:'1（RIGHT）'},
+ sw:{id:'down_left',jp:'画面左下（↙）',delta:'(0,+1)',screen:'(-28.8,+18)',atlas:'0（DOWN）'},
+ ne:{id:'up_right',jp:'画面右上（↗）',delta:'(0,-1)',screen:'(+28.8,-18)',atlas:'2（UP）'},
+ nw:{id:'up_left',jp:'画面左上（↖）',delta:'(-1,0)',screen:'(-28.8,-18)',atlas:'3（LEFT）'}
+}
 const worlds={wafu:ART.style,frontier:'中世ファンタジー。落ち着いたアースカラー、左上光源、整理されたドット表現。',ruins:'現実的な廃墟・日用品。低彩度、明確な輪郭、2Dドット絵。',neutral:'汎用レトロRPG。明確な輪郭と統一光源、低ノイズ。'};
 const types={
  saku:{name:'榊 朔太郎（宮大工の息子）',size:'64',colors:'16',role:'主人公キャラクター',extra:'19歳の宮大工の息子・見習い。黒髪・太眉・約3頭身。藍染めの短い仕事着、茶色の股引・脚絆・草鞋、手拭い。腰に墨壺・曲尺・鑿・道具袋。父の木槌を手に持つか肩に担ぐ。刀・鎧・兜・西洋騎士風は不可。職人としてのシルエットを重視。左手の火傷痕は判別できる場合のみ。'},
@@ -343,28 +357,30 @@ function generate(){
  const isIso=get('assetView').value==='iso';
  const direction=CAMERA_DIRECTIONS[get('cameraDirection').value]||CAMERA_DIRECTIONS.se;
  const locked=get('lockDirection').checked&&isIso;
- const cameraGuide=locked?`【最重要：カメラ方向ロック／全素材で同じ向き】
-- 固定カメラ：${direction.jp}側から対象を見下ろす、約30度の仰角の3/4アイソメトリック視点。
-- 画面の上下左右を基準に指定する。左右反転、逆方向の3/4、カメラの回転・水平反転、真横・正面・真上からの視点は禁止。
-- キャラクターの顔・胸・つま先は${direction.jp}を向く。視線、鼻先、胸の方向、足の向きを一致させる。
-- 建物は${direction.walls}が見えるようにし、樹木・岩・道具も同じ固定カメラから描く。素材ごとにカメラを変更しない。
-- 基準となる菱形タイルの画面上の傾斜は横長（約58×36px）。足元または接地点を配置アンカーとする。
-- カメラ位置と光源は別の概念。光源は画面左上のまま固定する。
-- 生成画像が反対向きなら採用せず修正する。基準画像を添付した場合は、そのカメラ方向を優先して一致させる。
-English reinforcement: FIXED CAMERA from ${direction.en}, 30-degree elevation. Character FACING ${direction.en}. All assets share EXACT SAME camera azimuth. NO MIRROR, NO FLIPPED VIEW, NO REVERSE THREE-QUARTER VIEW, NO CAMERA ROTATION.
+ const cameraGuide=locked?`【最重要：固定投影と向き（FRONTIER TACTICS art_standard_v1）】
+- 視点は固定の2D平行投影。Camera3Dは使用しない。画面上の菱形床は幅57.6×高さ36px（比率1.6:1）。通常の64×32px（2:1）タイルへ変更しない。
+- 投影：screen_x=origin_x+(grid_x-grid_y)*28.8、screen_y=origin_y+(grid_x+grid_y)*18.0、origin=(490,126)。水平に対する辺の傾きは約±32度。遠近法・消失点なし。人物や柱は画面に垂直。
+- 仰角約38.68度は投影から導かれる参考値であり、カメラを新設・回転する指定ではない。カメラの向きは全素材で固定する。
+- この素材のfacing ID：${direction.id}（${direction.jp}）。盤面移動差分${direction.delta}、画面移動差分${direction.screen}、旧アトラス対応行${direction.atlas}。
+- 人物の場合、顔・胸・つま先・装備の前後を${direction.jp}に統一する。別方向を描く際は同じカメラから対象だけを向け直す。PNGを45度回転させない。左右反転で代用しない。
+- 建物・樹木・岩など回転しない素材は facing=fixed としてよい。接地面の中央と占有範囲を別に定義する。
+- 生成画像が向きと異なれば採用せず修正する。必ず基準キャラ・57.6×36の床・4方向ガイドと並べて目視確認する。
+English: FIXED 2D PARALLEL PROJECTION, diamond tile 57.6x36 (1.6:1). Character FACING ${direction.id}. DO NOT rotate camera, DO NOT mirror sprite, DO NOT change projection, NO perspective.
 `:'';
  const colorGuide=paletteLimit==='free'?'色数は必要最小限にし、共通パレットを優先する。':`この素材の不透明ピクセルは最大${paletteLimit}色程度を目標にする（ゲーム全体の64色とは別の上限）。`;
  const paletteText=ART.paletteGroups.map(([group,colors])=>`${group}: ${colors.join(' / ')}`).join('\n');
- const scene=isWafu?`【全素材共通のアート規格／FRONTIER TACTICS】\n- 世界観：${world}\n- 日本の文化・風習・伝承を形や材質に反映する。侍・妖怪・建築・植物・道具を同じ世界のものとして統一する。\n- 視点は同じ3/4アイソメトリック系。左上から光が当たり、右下を暗くする。輪郭と影は硬いピクセル境界。\n- 1ピクセルの情報密度を素材間で揃える。32px絵の単純な4倍拡大と、128pxで細密に描いた絵を無秩序に混ぜない。\n- 基本64色の中から必要な色だけを使う。各素材は12〜24色を目安とし、複雑な大型建築のみ32色程度まで許容。\n- 木・石・布・金属などの材質は原則3〜4色の明暗段階。彩度は抑え、地面より味方ユニットや重要物が見分けやすい明度差を確保。\n- 全素材共通64色（16分類×4色、HEX値厳守を目標）：\n${paletteText}\n- 可能な限りこの64色以外を追加しない。素材の使用色数が少ない場合は、64色から部分集合を選ぶ。\n`:`【アート規格】\n- ${world}\n- 光源とドット密度を同一ゲーム内の他素材と統一する。\n`;
- return `FRONTIER TACTICS向けゲーム用${asset.role}「${name}」を1点制作してください。\n\n【最重要：納品物】\n- 最終納品は${size}×${size}pxの実寸PNGファイル1点（RGBA、背景アルファ透明）。\n- 文字、設定画、比較表、スプライトシート、チェック柄、額縁、UI、背景、床、別オブジェクトは描かない。\n- 全体をキャンバス内に収め、輪郭を切らず適度な透明余白を残す。足元は下中央付近を配置基準とする。\n\n【素材固有の指定】\n- 対象：${name}\n- 種別：${asset.role}\n- 視点：${view}\n${cameraGuide?cameraGuide+'\n':''}- デザイン指針：${asset.extra}\n- ${colorGuide}\n${details?`- 追加指定：${details}\n`:''}\n${scene}\n【ドット絵の品質】\n- ピクセルが1個ずつ判別できるネイティブなドット絵。アンチエイリアス、ぼかし、写真調の質感、連続グラデーションは禁止。\n- 1px単位で編集できる、整理されたシルエットと陰影。\n- 戦術ゲームの12×12菱形マップに並べたときに識別できる。\n\n【制作・検査】\n1. 単体のゲーム素材として設計する。\n2. AIの出力が${size}×${size}pxでなければ、最近傍補間を使って実寸PNGへ変換する。縮小で重要な形が潰れたら輪郭を修正する。\n3. 市松模様が焼き込まれていないか確認し、背景を透明化する。\n4. PNGをプログラムで開き、${size}×${size}px・RGBA・透明背景・使用色数・半透明画素を検査する。\n5. 共通64色から外れた色がある場合は、必要に応じて最も近い共通色へ置換し、変換後の色数を報告する。\n6. 完成PNGをファイルとして渡す。\n\n【次の工程】\nPixelFit Studioで部位の大きさと位置を調整し、1px単位で手描き修正する。元の意匠と統一パレットをなるべく維持する。`;
+ const scene=isWafu?`【全素材共通のアート規格／FRONTIER TACTICS】\n- 世界観：${world}\n- 日本の文化・風習・伝承を形や材質に反映する。侍・妖怪・建築・植物・道具を同じ世界のものとして統一する。\n- 視点は既存の固定2D平行投影。床57.6×36px（1.6:1）、地上2軸は画面上の斜め方向、垂直軸は画面垂直。光源は左上。遠近法は禁止。\n- 1ピクセルの情報密度を素材間で揃える。32px絵の単純な4倍拡大と、128pxで細密に描いた絵を無秩序に混ぜない。\n- 基本64色の中から必要な色だけを使う。各素材は12〜24色を目安とし、複雑な大型建築のみ32色程度まで許容。\n- 木・石・布・金属などの材質は原則3〜4色の明暗段階。彩度は抑え、地面より味方ユニットや重要物が見分けやすい明度差を確保。\n- 全素材共通の正式64色 palette_64_v1.json（基準48色＋追加16色、HEX厳守）：\n${paletteText}\n- 可能な限りこの64色以外を追加しない。素材の使用色数が少ない場合は、64色から部分集合を選ぶ。\n`:`【アート規格】\n- ${world}\n- 光源とドット密度を同一ゲーム内の他素材と統一する。\n`;
+ return `FRONTIER TACTICS向けゲーム用${asset.role}「${name}」を1点制作してください。\n\n【最重要：納品物】\n- 最終納品は${size}×${size}pxの実寸PNGファイル1点（RGBA、背景アルファ透明）。\n- 文字、設定画、比較表、スプライトシート、チェック柄、額縁、UI、背景、床、別オブジェクトは描かない。\n- 全体をキャンバス内に収め、輪郭を切らず適度な透明余白を残す。
+- 人物64×64の場合、接地アンカーは画像座標(29,57)、頭頂から接地まで55px（頭頂基準Y=2）。4方向と全アニメフレームでアンカーを固定する。武器や帽子の高さを身長に含めない。
+- 木・岩・建物は底面中央を個別アンカーとしてメタデータに記載し、人物アンカー(29,57)を流用しない。\n\n【素材固有の指定】\n- 対象：${name}\n- 種別：${asset.role}\n- 視点：${view}\n${cameraGuide?cameraGuide+'\n':''}- デザイン指針：${asset.extra}\n- ${colorGuide}\n${details?`- 追加指定：${details}\n`:''}\n${scene}\n【ドット絵の品質】\n- ピクセルが1個ずつ判別できるネイティブなドット絵。アンチエイリアス、ぼかし、写真調の質感、連続グラデーションは禁止。\n- 1px単位で編集できる、整理されたシルエットと陰影。\n- 戦術ゲームの12×12菱形マップに並べたときに識別できる。\n\n【制作・検査】\n1. 単体のゲーム素材として設計する。\n2. AIの出力が${size}×${size}pxでなければ、最近傍補間を使って実寸PNGへ変換する。縮小で重要な形が潰れたら輪郭を修正する。\n3. 市松模様が焼き込まれていないか確認し、背景を透明化する。\n4. PNGをプログラムで開き、${size}×${size}px・RGBA・透明背景・使用色数・半透明画素を検査する。透明RGBは不問、アルファは0/255のみ。\n5. Codex正式64色以外の色があれば不適合として報告する。自動置換はしない。新規候補で明示的に承認された場合のみ色変換する。\n6. 完成PNGをファイルとして渡す。\n\n【次の工程】\nPixelFit Studioでアンカーガイド・55px身長ガイド・正式64色検査を行い、1px単位で手描き修正する。Godot確認シーンで方向と床との整合を目視確認し、承認後に本編登録する。既存採用済みPNGは上書きしない。`;
 }
 function update(){
  const iso=get('assetView').value==='iso';
  get('cameraDirection').disabled=!iso;
  get('lockDirection').disabled=!iso;
- get('cameraDirectionHelp').textContent=!iso?'斜め見下ろし以外の視点では方向ロックは適用されません。':get('lockDirection').checked?'選択方向を全素材に強制反映。基準の向きはプリセット切替後も保持します。':'方向ロックはオフです。AIが左右を取り違える可能性があります。';
+ get('cameraDirectionHelp').textContent=!iso?'斜め見下ろし以外ではfacing指定を適用しません。':get('lockDirection').checked?'固定2D投影は変えず、キャラのfacingのみ指定します。設定は素材プリセットを変えても保持します。':'facing明記がオフです。生成画像の向きは必ず目視確認してください。';
  get('generatedPrompt').value=generate();
- get('promptStatus').textContent=iso&&get('lockDirection').checked?'共通アート規格＋カメラ方向ロックを反映しました':'共通アート規格を反映しました';
+ get('promptStatus').textContent=iso&&get('lockDirection').checked?'Codex正式アート規格＋facingを反映しました':'Codex正式アート規格を反映しました';
 }
 function setPreset(){const type=types[get('assetPreset').value]||types.custom;get('assetName').value=type.name;get('assetSize').value=type.size;get('assetView').value='iso';get('assetWorld').value='wafu';get('assetPalette').value=type.colors;get('assetDetails').value='';update()}
 get('assetPreset').addEventListener('change',setPreset);
@@ -482,7 +498,7 @@ el('convertToEditor').onclick=()=>{
  segments=[{sy0:0,sy1:a,dy0:0,dy1:a,sx:100,cx:Math.floor(w/2),dx:0},{sy0:a,sy1:b,dy0:a,dy1:b,sx:100,cx:Math.floor(w/2),dx:0},{sy0:b,sy1:h,dy0:b,dy1:h,sx:100,cx:Math.floor(w/2),dx:0}];
  el('segment').value='0';loadSegment();draw();view('edit');
  message(`${w}×${h}の変換画像を編集画面へ読み込みました。ペン・消しゴムで修正できます。`);
- document.getElementById('previews').scrollIntoView({behavior:'smooth',block:'center'});
+ document.getElementById('editorMain').scrollIntoView({behavior:'smooth',block:'start'});
 };
 el('convertDownload').onclick=()=>{
  if(!converted)return;
@@ -505,5 +521,79 @@ el('convertDownload').onclick=()=>{
  function valid(){try{const u=new URL(input.value.trim());if(u.protocol!=='https:'&&u.protocol!=='http:')throw Error();return u.href}catch(e){status.textContent='https:// で始まる公開URLを入力してください';return null}}
  el('saveOnlineUrl').onclick=()=>{const url=valid();if(!url)return;try{localStorage.setItem(key,url);status.textContent='公開URLを保存しました。次回もこのURLを使えます。'}catch(e){status.textContent='URLの保存ができませんでした。オンライン版は開けます。'}};
  el('openOnline').onclick=()=>{const url=valid();if(!url)return;try{localStorage.setItem(key,url)}catch(e){};const u=new URL(url);u.searchParams.set('pixelfit_update',Date.now().toString());const a=document.createElement('a');a.href=u.href;a.target='_blank';a.rel='noopener noreferrer';document.body.appendChild(a);a.click();a.remove();status.textContent='オンライン版を新しいタブで開きます。開かない場合は公開URLを直接開いてください。';};
+})();
+</script><script>
+'use strict';
+(function(){
+ const el=id=>document.getElementById(id);
+ const overlay=el('artGuideOverlay');
+ const guideToggle=el('showArtGuides');
+ const report=el('artValidationReport');
+ const palette=window.PIXELFIT_ART.palette.map(x=>x.toUpperCase());
+ const paletteSet=new Set(palette);
+ function paintGuides(){
+   if(!overlay)return;
+   const cv=el('result');
+   if(overlay.width!==cv.width||overlay.height!==cv.height){overlay.width=cv.width;overlay.height=cv.height;}
+   const c=overlay.getContext('2d');c.clearRect(0,0,overlay.width,overlay.height);
+   if(!guideToggle.checked||overlay.width!==64||overlay.height!==64)return;
+   c.imageSmoothingEnabled=false;
+   // Exact pixel-grid guide, kept out of exported image data.
+   c.fillStyle='rgba(57,229,188,.70)';
+   for(let x=0;x<64;x+=2){c.fillRect(x,2,1,1);c.fillRect(x,57,1,1)}
+   c.fillStyle='#ffbd68';
+   c.fillRect(29,53,1,9);c.fillRect(25,57,9,1);
+   c.fillStyle='#171d21';c.fillRect(29,57,1,1);
+ }
+ guideToggle.addEventListener('change',paintGuides);
+ // Existing editor draw() is the single render path for edits, transforms, Undo and imports.
+ const originalDraw=draw;
+ draw=function(){originalDraw();paintGuides();};
+ paintGuides();
+ function inspect(){
+   const image=previewData||out;
+   if(!image){report.textContent='編集するPNGを読み込んでください。';report.dataset.result='fail';return;}
+   const data=image.data,used=new Set();let opaque=0,transparent=0,partial=0;
+   for(let i=0;i<data.length;i+=4){
+     const a=data[i+3];
+     if(a===0){transparent++;continue}
+     if(a===255)opaque++;else partial++;
+     used.add('#'+[data[i],data[i+1],data[i+2]].map(n=>n.toString(16).padStart(2,'0')).join('').toUpperCase());
+   }
+   const extra=[...used].filter(x=>!paletteSet.has(x));
+   const goodSize=image.width===64&&image.height===64;
+   const checks=[['64×64px',goodSize],['可視ピクセルあり',opaque+partial>0],['透明ピクセルあり',transparent>0],['アルファ0/255のみ',partial===0],['可視色64色以下',used.size<=64],['正式64色パレットに所属',extra.length===0]];
+   const passed=checks.every(x=>x[1]);
+   report.dataset.result=passed?'pass':'fail';
+   report.textContent=(passed?'形式検査：合格（候補）':'形式検査：要修正')+'\n'+checks.map(([n,ok])=>(ok?'✓ ':'✕ ')+n).join('  /  ')+'\n'+
+     'サイズ '+image.width+'×'+image.height+'px ／ 可視色 '+used.size+'色 ／ 不透明 '+opaque+'px ／ 半透明 '+partial+'px ／ 透明 '+transparent+'px'+
+     (extra.length?'\n規格外の色 '+extra.length+'色：'+extra.slice(0,14).join(', ')+(extra.length>14?' ほか':''):'')+
+     '\n※アンカーの実際の接地、身長55px、向き、画風、床との整合は自動判定できません。Godot確認シーンで目視してください。';
+ }
+ el('validateArt').addEventListener('click',inspect);
+ el('quantizeArt').addEventListener('click',()=>{
+   if(!out){report.textContent='先に画像を読み込んでください。';return}
+   if(!confirm('現在の新規候補の色を正式64色に置換します。既存採用済み原本には使わないでください。Undo可能ですが、色の差が失われます。続けますか？'))return;
+   if(previewData)applyTransform();
+   push();
+   const p=palette.map(hex=>[parseInt(hex.slice(1,3),16),parseInt(hex.slice(3,5),16),parseInt(hex.slice(5,7),16)]);
+   const cache=new Map();
+   for(let i=0;i<out.data.length;i+=4){
+     if(out.data[i+3]===0)continue;
+     const rgb=[out.data[i],out.data[i+1],out.data[i+2]];
+     const key=rgb.join(',');let nearest=cache.get(key);
+     if(!nearest){let best=Infinity;for(const c of p){const d=(rgb[0]-c[0])**2*.30+(rgb[1]-c[1])**2*.59+(rgb[2]-c[2])**2*.11;if(d<best){best=d;nearest=c}}cache.set(key,nearest)}
+     out.data[i]=nearest[0];out.data[i+1]=nearest[1];out.data[i+2]=nearest[2];
+   }
+   draw();inspect();message('正式64色へ置換しました。必要ならUndoで戻せます。半透明は別途修正してください。');
+ });
+ el('downloadArtMeta').addEventListener('click',()=>{
+   const dir=el('cameraDirection').value;
+   const dirs={se:'down_right',sw:'down_left',ne:'up_right',nw:'up_left'};
+   const isPerson=el('assetPreset').value==='saku'||el('assetPreset').value==='npc';
+   const meta={projection:'frontier_1p6_v1',palette:'frontier_shared_64_v1',canvas_px:[w,h],anchor_px:isPerson&&w===64&&h===64?[29,57]:null,facing:el('assetView').value==='iso'?(isPerson?dirs[dir]:'fixed'):'unspecified',scale:1.0,filter:'Nearest',note:isPerson?'人物は頭頂から接地まで55px。画像の向きと接地はGodotで要確認。':'接地面中央アンカーと占有範囲は素材ごとに設定すること。'};
+   const blob=new Blob([JSON.stringify(meta,null,2)],{type:'application/json;charset=utf-8'});
+   const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='frontier_art_metadata.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500);
+ });
 })();
 </script></body></html>
