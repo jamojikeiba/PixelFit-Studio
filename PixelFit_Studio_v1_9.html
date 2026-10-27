@@ -1,0 +1,599 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PixelFit Studio — ドット絵精密エディター</title><style>
+:root{font-family:system-ui,'Meiryo',sans-serif;color:#e6edf3;background:#10151c}*{box-sizing:border-box}body{margin:0}header{padding:17px 24px;border-bottom:1px solid #2c3642;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}h1{font-size:21px;margin:0;letter-spacing:.2px}header small{color:#92a5b9}main{display:grid;grid-template-columns:320px minmax(0,1fr);gap:18px;padding:18px;max-width:1450px;margin:auto}aside,.panel{background:#19212b;border:1px solid #2d3b4b;border-radius:12px;padding:16px}aside{align-self:start}h2{font-size:15px;margin:0 0 12px}h3{font-size:13px;color:#b8c9da;margin:17px 0 9px}.muted{color:#9aabbc;font-size:12px;line-height:1.6}.group{margin:11px 0}label{display:block;font-size:12px;color:#c5d2de;margin:0 0 5px}input[type=file]{width:100%;font-size:11px}input[type=number],select{width:100%;background:#101721;color:#edf4fb;border:1px solid #415265;border-radius:7px;padding:8px}input[type=range]{width:100%;accent-color:#61c2ad}button{border:1px solid #4c6074;border-radius:8px;background:#263647;color:#eef5fb;padding:9px 11px;cursor:pointer;font-weight:600}button:hover{background:#34495d}button.primary{background:#257b6e;border-color:#329786}button.primary:hover{background:#2c9888}button:disabled{opacity:.4;cursor:not-allowed}.buttons{display:flex;flex-wrap:wrap;gap:7px}.buttons button{flex:1}.row{display:flex;gap:8px;align-items:center}.row>*{flex:1}.setting{display:grid;grid-template-columns:1fr 68px;align-items:center;gap:8px;margin:7px 0}.setting label{margin:0}.setting input{width:68px}.previewrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.preview{min-width:0}.preview .title{font-size:12px;font-weight:700;color:#c2d3e4;margin:0 0 8px}.viewport{position:relative;background-color:#f0f2f5;background-image:linear-gradient(45deg,#d8dde3 25%,transparent 25%),linear-gradient(-45deg,#d8dde3 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#d8dde3 75%),linear-gradient(-45deg,transparent 75%,#d8dde3 75%);background-size:24px 24px;background-position:0 0,0 12px,12px -12px,-12px 0;display:flex;align-items:center;justify-content:center;aspect-ratio:1;border-radius:8px;overflow:hidden;touch-action:none}canvas{width:100%;height:100%;image-rendering:pixelated;cursor:crosshair}.status{font-size:12px;color:#a8bdcb;margin-top:9px;min-height:19px}.toolbar{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}.toolbar button.active{background:#226c77;border-color:#5bd0ce}.help{font-size:12px;color:#a8b9c9;line-height:1.75}.badge{display:inline-block;background:#253e42;color:#7fe1c6;padding:4px 8px;border-radius:6px;font-size:11px}.divider{border-top:1px solid #354150;margin:16px 0}footer{color:#8092a5;font-size:11px;padding:10px 22px 24px;max-width:1450px;margin:auto}@media(max-width:1050px){main{grid-template-columns:1fr}.previewrow{gap:7px}}@media(max-width:600px){.previewrow{grid-template-columns:1fr}.viewport{max-width:420px;margin:auto}} 
+/* AI prompt generator */
+.prompt-maker{max-width:1414px;margin:18px auto 0;padding:18px;background:#19212b;border:1px solid #2d3b4b;border-radius:12px}
+.prompt-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}
+.prompt-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.prompt-controls .wide{grid-column:1/-1}
+.prompt-maker input[type=text],.prompt-maker textarea{width:100%;background:#101721;color:#edf4fb;border:1px solid #415265;border-radius:7px;padding:10px;font:inherit;font-size:13px}
+.prompt-maker textarea{resize:vertical;min-height:265px;line-height:1.65}
+.prompt-maker .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.prompt-maker .actions button{flex:1}
+.prompt-maker .status{min-height:18px}
+@media(max-width:850px){.prompt-grid{grid-template-columns:1fr}}
+</style><style>
+.convert-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,390px);gap:20px}
+.convert-preview .title{font-size:12px;font-weight:700;margin-bottom:8px}
+.convert-preview .viewport{max-width:390px}
+.convert-layout .group{margin:10px 0}
+@media(max-width:760px){.convert-layout{grid-template-columns:1fr}}
+</style><style>
+/* v1.4: editor-first layout */
+:root{background:#10151c}header{position:sticky;top:0;z-index:20;background:#10151cf2;backdrop-filter:blur(12px);padding:11px 20px}header h1{font-size:19px}header small{font-size:11px}header .buttons button{padding:8px 10px;font-size:12px}
+.canvas-size-row{display:grid;grid-template-columns:1fr auto 1fr auto;gap:8px;align-items:end;margin:9px 0}.canvas-size-row label{min-width:0}.canvas-size-row input{margin-top:5px}.canvas-size-row span{padding-bottom:9px;color:#a9b8c8}.canvas-controls .buttons button{font-size:11px;padding:9px 6px}.canvas-controls{border-top:1px solid #354150}
+main#editorMain{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:292px minmax(0,1fr);gap:14px;padding:14px;align-items:start}
+.controls{padding:13px;max-height:calc(100vh - 92px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}.controls-head{display:flex;justify-content:space-between;align-items:center;gap:8px}.controls-head h2{margin:0}.controls-head .muted{font-size:10px}
+.control-block{border-top:1px solid #354150;margin-top:13px;padding-top:12px}.control-block h3{margin:0 0 11px;color:#e5edf3;font-size:13px}.control-block .group{margin:9px 0}.control-block label{font-size:12px}.control-block .muted{font-size:11px;line-height:1.45}
+.primary-controls{background:#202d39;border:1px solid #3b5161;border-radius:11px;padding:13px;margin-left:-3px;margin-right:-3px}
+.compact-row{display:flex;align-items:center;gap:12px;margin:7px 0 11px}.compact-row label{margin:0;flex:1}.compact-row input{width:82px!important}
+.position-label{display:flex;justify-content:space-between;align-items:center;gap:6px;margin:14px 0 7px}.position-label label{margin:0}.position-label .muted{max-width:120px;text-align:right;font-size:10px}
+.axis-row{display:grid;grid-template-columns:auto 1fr auto 1fr;align-items:center;gap:6px}.axis-row label{margin:0}.axis-row input{width:100%;min-width:0;padding:6px}
+.nudge-row{display:flex;gap:5px;margin:10px 0}.nudge-row button{flex:1;padding:7px 3px}.nudge-row button:last-child{flex:1.8;font-size:11px}.transform-actions{margin-top:10px}.transform-actions button{font-size:12px;padding:9px 5px}
+.tool-select{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin:0 0 10px}.tool-select button{padding:8px 2px;font-size:11px}.inline-paint{display:grid;grid-template-columns:80px 1fr;gap:12px;align-items:center}.inline-paint input[type=color]{width:42px;height:29px;vertical-align:middle;border:0;background:transparent}.check-row{display:flex;gap:16px;margin-top:8px}.check-row label{margin:0}
+.advanced{border-top:1px solid #354150;margin-top:14px;padding-top:10px}.advanced summary,.extra-tools summary{cursor:pointer;font-weight:700;color:#cfe0ed;font-size:12px;padding:9px 4px}.advanced[open] summary{margin-bottom:10px}
+.workspace{min-width:0;padding:16px}.workspace-top{display:flex;align-items:start;justify-content:space-between;gap:12px}.workspace-top h2{margin:0 0 3px;font-size:16px}.workspace-top p{margin:0}.canvas-info{font-size:11px;color:#a9c7d7;max-width:260px;text-align:right}
+.main-canvas-wrap{display:flex;justify-content:center;align-items:center;min-height:0;margin:12px 0 4px;padding:12px;background:#121923;border:1px solid #334352;border-radius:12px}
+.edit-viewport{width:min(100%, min(62vh, 580px));max-width:580px;aspect-ratio:1;border:1px solid #758292;box-shadow:0 4px 24px #0004;border-radius:3px}
+.edit-viewport canvas{width:100%;height:100%;touch-action:none;cursor:grab}.edit-viewport canvas.pencil-cursor{cursor:crosshair}.edit-viewport canvas:active{cursor:grabbing}
+.editor-message{margin:5px 0 13px;min-height:18px}.reference-bar{border-top:1px solid #354150;padding-top:12px;display:grid;grid-template-columns:160px 160px minmax(0,1fr);gap:14px;align-items:start}.mini-preview{display:grid;grid-template-columns:1fr 75px;align-items:center;gap:8px;min-width:0}.mini-preview .viewport{width:75px;height:75px;aspect-ratio:1}.mini-text{display:flex;flex-direction:column;gap:5px;min-width:0}.mini-text strong{font-size:12px}.mini-text .muted{font-size:10px;overflow-wrap:anywhere}.workspace-help{font-size:11px;color:#aabac8;line-height:1.5}.workspace-help strong{color:#e5edf3}.workspace-help p{margin:4px 0}
+.extra-tools{max-width:1372px;margin:0 auto 22px;padding:14px;background:#19212b;border:1px solid #2d3b4b;border-radius:12px}.extra-tools>h2{margin:0 0 3px}.extra-tools>p{margin:0 0 6px}.extra-tools>details{border-top:1px solid #354150}.extra-tools .prompt-maker{max-width:none;margin:0;padding:12px;border:0;background:transparent}.extra-tools .convert-preview .viewport{max-width:340px}
+@media(max-width:950px){main#editorMain{grid-template-columns:250px minmax(0,1fr);gap:9px;padding:9px}.reference-bar{grid-template-columns:repeat(2,minmax(0,1fr))}.workspace-help{grid-column:1/-1}.mini-preview{grid-template-columns:1fr 70px}.mini-preview .viewport{width:70px;height:70px}}
+@media(max-width:680px){header{position:relative}main#editorMain{display:flex;flex-direction:column-reverse}main#editorMain>*{width:100%}.controls{max-height:none;overflow:visible}.edit-viewport{width:min(100%, 76vw)}.reference-bar{gap:7px}.mini-preview{grid-template-columns:1fr 62px}.mini-preview .viewport{width:62px;height:62px}.workspace{padding:11px}.workspace-top p{font-size:10px}}
+</style><style>
+.character-swatches{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:5px;margin:8px 0}
+.character-swatch{min-width:0;height:39px;border:1px solid #ffffff35;border-radius:6px;cursor:pointer;padding:0;box-shadow:inset 0 0 0 1px #0002}
+.character-swatch:hover,.character-swatch:focus-visible{outline:2px solid #77d5c3;outline-offset:2px}
+.prompt-palette-heading{display:flex;justify-content:space-between;gap:8px;align-items:center}.prompt-palette-heading label{margin:0}
+@media(max-width:600px){.character-swatches{grid-template-columns:repeat(8,minmax(0,1fr))}.character-swatch{height:30px}}
+</style><style>
+.world-swatches{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:10px 0}
+.world-swatch-group{background:#101923;border:1px solid #304454;border-radius:8px;padding:8px;min-width:0}
+.world-swatch-name{display:block;font-size:10px;color:#bed1de;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.world-swatch-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.world-swatch-row .character-swatch{height:30px;border-radius:4px}
+.update-panel{border-top:1px solid #354150;margin-top:5px}.update-panel summary{cursor:pointer;padding:12px 4px;color:#cfe0ed;font-size:12px;font-weight:700}
+.update-content{padding:10px 6px 16px}.update-content h3{margin:0 0 6px}.update-fields{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:7px;align-items:end}
+.update-fields label{grid-column:1/-1;margin:0}.update-fields input{min-width:0;width:100%;background:#101721;color:#edf4fb;border:1px solid #415265;border-radius:7px;padding:10px}
+@media(max-width:850px){.world-swatches{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:500px){.update-fields{grid-template-columns:1fr}.world-swatches{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style><style>
+.art-compliance{margin:12px 0 18px;padding:14px;border:1px solid #355f5a;border-radius:10px;background:#14272a}
+.art-compliance-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.art-compliance-head h3{margin:0 0 7px;font-size:14px}
+.art-guide-toggle{display:flex;align-items:center;gap:7px;color:#bde3d7;font-size:12px;cursor:pointer}
+.art-compliance-actions{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.art-compliance-actions button{font-size:12px}
+.art-validation-report{font-size:12px;line-height:1.7;background:#101c23;border:1px solid #344850;padding:11px;border-radius:7px;white-space:pre-wrap;word-break:break-word}
+.art-validation-report[data-result="pass"]{border-color:#427a64}.art-validation-report[data-result="fail"]{border-color:#a56c56}
+</style></head><body>
+<header><div><h1>PixelFit <span style="color:#6ed9bd">Studio</span> <span class="badge">v1.9 / FRONTIER 正式アート規格</span></h1><small>ドット絵を描き直さず、1px単位で形を整える</small></div><div class="buttons"><button id="reset">元に戻す</button><button id="undo">↶ Undo</button><button id="redo">↷ Redo</button><button class="primary" id="export">PNGを書き出す</button></div></header>
+<main id="editorMain">
+<aside class="controls">
+ <div class="controls-head"><h2>編集ツール</h2><span class="muted">画像を見ながら調整</span></div>
+ <section class="control-block"><h3>画像を読み込む</h3>
+  <div class="group"><label for="srcFile">編集する画像（PNG）</label><input id="srcFile" type="file" accept="image/png,image/*"></div>
+  <div class="group"><label for="refFile">比較用画像（任意）</label><input id="refFile" type="file" accept="image/png,image/*"></div>
+ </section>
+ <section class="control-block canvas-controls"><h3>キャンバスのサイズ</h3>
+  <div class="group"><label for="canvasPreset">素材に合わせたサイズ</label><select id="canvasPreset"><option value="64x64">キャラクター 64×64</option><option value="40x60">若木・小物 40×60</option><option value="64x80">中型の木 64×80</option><option value="80x100">大きな木 80×100</option><option value="96x128">巨木 96×128</option><option value="custom">自由設定</option></select></div>
+  <div class="canvas-size-row"><label for="canvasWidth">幅 <input id="canvasWidth" type="number" min="8" max="512" step="1" value="64"></label><span>×</span><label for="canvasHeight">高さ <input id="canvasHeight" type="number" min="8" max="512" step="1" value="64"></label><span>px</span></div>
+  <div class="group"><label for="canvasAnchor">サイズ変更時の配置</label><select id="canvasAnchor"><option value="feet">足元を下中央に合わせる</option><option value="center">キャンバスの中央を維持</option></select></div>
+  <div class="buttons"><button id="resizeCanvas" class="primary">キャンバスを変更</button><button id="blankCanvas">新規・透明キャンバス</button></div>
+  <p class="muted">既存の絵を引き伸ばさず、透明な余白を増減します。木の大きさ自体は下の「画像全体の倍率」で調整。</p>
+ </section>
+ <section class="control-block primary-controls"><h3>大きさ・位置</h3>
+  <div class="group"><label for="overallScale">画像全体の倍率 <strong id="overallScaleLabel">100%</strong></label><input id="overallScale" type="range" min="25" max="300" step="1" value="100"></div>
+  <div class="compact-row"><label for="overallScaleNum">倍率（%）</label><input id="overallScaleNum" type="number" min="25" max="300" step="1" value="100"></div>
+  <div class="group"><label for="overallAnchor">拡大の基準</label><select id="overallAnchor"><option value="center">画像の中心</option><option value="feet">足元を固定</option></select></div>
+  <div class="position-label"><label>画像の位置（1px単位）</label><span class="muted">画像をドラッグして移動も可能</span></div>
+  <div class="axis-row"><label for="moveX">左右 X</label><input id="moveX" type="number" min="-512" max="512" step="1" value="0"><label for="moveY">上下 Y</label><input id="moveY" type="number" min="-512" max="512" step="1" value="0"></div>
+  <div class="nudge-row"><button id="nudgeLeft" title="左へ1px">←</button><button id="nudgeUp" title="上へ1px">↑</button><button id="nudgeDown" title="下へ1px">↓</button><button id="nudgeRight" title="右へ1px">→</button><button id="centerObject">中央へ</button></div>
+  <div class="buttons transform-actions"><button id="applyOverallScale" class="primary">変更を確定</button><button id="resetOverallScale">調整を取り消す</button></div>
+  <p class="muted" id="transformHint">倍率や位置を変えると右側にプレビューされます。確定前は何度でも調整できます。</p>
+ </section>
+ <section class="control-block"><h3>ドットを修正</h3>
+  <div class="toolbar tool-select"><button id="moveTool" class="active">✥ 移動</button><button id="brush">ペン</button><button id="eraser">消しゴム</button><button id="pick">スポイト</button></div>
+  <div class="inline-paint"><label for="color">色 <input type="color" id="color" value="#8b644c"></label><div><label for="size">ペン <span id="sizeLabel">1px</span></label><input id="size" type="range" min="1" max="5" value="1"></div></div>
+  <div class="check-row"><label><input id="grid" type="checkbox"> グリッド</label><label><input id="guides" type="checkbox"> 領域ガイド</label></div>
+ <p class="muted">※正式64色に含まれない色をペンで塗ると、規格チェックで検出します。</p>
+ </section>
+ <details class="advanced"><summary>詳細設定（領域別の体格調整）</summary>
+  <p class="muted">元画像を頭・胴体・脚の3領域に分けて調整します。適用すると現在の手描き編集は置き換わります。</p>
+  <div class="group"><label for="segment">編集する領域</label><select id="segment"><option value="0">頭・首</option><option value="1">胴体・腕</option><option value="2">腰・脚</option></select></div>
+  <div class="setting"><label for="sy0">元画像 開始Y</label><input id="sy0" type="number" min="0" max="63"></div>
+  <div class="setting"><label for="sy1">元画像 終了Y</label><input id="sy1" type="number" min="1" max="64"></div>
+  <div class="setting"><label for="dy0">出力 開始Y</label><input id="dy0" type="number" min="0" max="63"></div>
+  <div class="setting"><label for="dy1">出力 終了Y</label><input id="dy1" type="number" min="1" max="64"></div>
+  <div class="setting"><label for="sx">横幅倍率（%）</label><input id="sx" type="number" min="50" max="200"></div>
+  <div class="setting"><label for="cx">中心X</label><input id="cx" type="number" min="0" max="64"></div>
+  <div class="setting"><label for="dx">横方向移動（px）</label><input id="dx" type="number" min="-32" max="32"></div>
+  <div class="buttons"><button id="apply" class="primary">領域設定を適用</button><button id="preset">初期設定</button></div>
+  <div class="divider"></div><div class="buttons"><button id="saveSettings">設定を保存</button><button id="loadSettings">設定を読込</button><input type="file" id="settingsFile" accept="application/json,.json" hidden></div>
+ </details>
+</aside>
+<section class="panel workspace">
+ <div class="workspace-top"><div><h2>編集中の画像</h2><p class="muted">キャラクターから大木まで、実寸キャンバスを編集できます。</p></div><div class="canvas-info" id="outStat"></div></div>
+ <div class="main-canvas-wrap"><div class="viewport edit-viewport" style="position:relative"><canvas id="result" width="64" height="64"></canvas><canvas id="artGuideOverlay" width="64" height="64" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;image-rendering:pixelated"></canvas></div></div>
+ <div id="msg" class="status editor-message" role="status"></div>
+ <section class="art-compliance" id="artCompliance" aria-labelledby="artComplianceTitle">
+ <div class="art-compliance-head"><h3 id="artComplianceTitle">FRONTIER TACTICS 規格チェック <span class="badge">art_standard_v1</span></h3><label class="art-guide-toggle"><input type="checkbox" id="showArtGuides" checked> アンカー・身長ガイド</label></div>
+ <p class="muted">人物64×64：接地アンカー <strong>(29,57)</strong> ／ 頭頂〜接地 <strong>55px</strong>（参考Y=2）。ガイドは表示専用でPNGに書き込みません。建物・樹木にはこの人物用アンカーを適用しません。</p>
+ <div class="art-compliance-actions"><button type="button" id="validateArt" class="primary">現在のPNGを検査</button><button type="button" id="quantizeArt">正式64色に置換（新規候補のみ）</button><button type="button" id="downloadArtMeta">素材メタデータJSON</button></div>
+ <div id="artValidationReport" class="art-validation-report" role="status">「現在のPNGを検査」でサイズ・アルファ・色数・パレットを確認できます。</div>
+ </section>
+ <div class="reference-bar"><div class="mini-preview"><div class="mini-text"><strong>比較用画像</strong><span id="refStat" class="muted"></span></div><div class="viewport"><canvas id="reference" width="64" height="64"></canvas></div></div>
+ <div class="mini-preview"><div class="mini-text"><strong>編集前の画像</strong><span id="srcStat" class="muted"></span></div><div class="viewport"><canvas id="source" width="64" height="64"></canvas></div></div>
+ <div class="workspace-help"><strong>使い方</strong><p>左で倍率・位置を調整 → 大きなプレビューで確認 → 「変更を確定」 → PNG保存。画像上をドラッグすると移動、ペンを選ぶと1ドットずつ描けます。</p><p>倍率変更は最近傍補間。キャンバスサイズは左の「キャンバスのサイズ」で変更できます。</p></div></div>
+</section>
+</main><section class="extra-tools"><h2>その他のツール</h2><p class="muted">普段の画像編集には不要な機能は折りたたんでいます。</p>
+<details><summary>画像をドット絵に変換する（共通64色対応）</summary><section class="prompt-maker" id="spriteConverter">
+<h2>画像 → ドット絵変換 <span class="badge">正式64色対応</span></h2>
+<p class="muted">ChatGPTで生成した大きな画像を読み込み、背景処理・切り抜き・最近傍縮小して、そのまま編集画面に送れます。処理はブラウザ内で完結します。</p>
+<div class="convert-layout">
+<div>
+<div class="group"><label for="convertFile">変換する画像</label><input type="file" id="convertFile" accept="image/*"></div>
+<div class="row">
+<div class="group"><label for="convertSize">出力サイズ</label><select id="convertSize"><option value="64">64×64</option><option value="32">32×32</option><option value="96">96×96</option><option value="128">128×128</option><option value="192">192×192</option></select></div>
+<div class="group"><label for="convertPadding">透明余白</label><select id="convertPadding"><option value="4">4px</option><option value="2">2px</option><option value="6">6px</option><option value="0">0px</option></select></div>
+</div>
+<div class="group"><label for="convertBackground">背景の扱い</label><select id="convertBackground"><option value="auto">自動（透明なら維持／不透明なら四隅から背景除去）</option><option value="keep">そのまま（元のアルファを維持）</option><option value="corners">四隅につながる同系色を透明化</option></select></div>
+<div class="group"><label for="convertTolerance">背景色の許容差 <span id="convertToleranceValue">28</span></label><input type="range" id="convertTolerance" min="0" max="100" value="28"></div>
+<div class="group"><label for="convertPalette">色数</label><select id="convertPalette"><option value="0">元の色を維持</option><option value="16">16色程度に削減</option><option value="32">32色程度に削減</option><option value="64">64色程度に削減</option><option value="shared64">Codex正式64色に置換（明示的に選択）</option></select></div>
+<div class="buttons"><button id="convertRun" class="primary">ドット絵へ変換</button><button id="convertToEditor" disabled>編集画面へ送る</button><button id="convertDownload" disabled>透過PNG保存</button></div>
+<div id="convertStatus" class="status" role="status">画像を選択してください</div>
+<p class="muted">※背景と被写体の色が似ている場合、背景の自動除去は失敗することがあります。変換プレビューを確認し、必要なら許容差を調整してください。市松模様が画像自体に焼き込まれている場合は完全除去を保証できません。</p>
+</div>
+<div class="convert-preview"><div class="title">変換結果（拡大プレビュー）</div><div class="viewport"><canvas id="convertCanvas" width="64" height="64"></canvas></div><div id="convertStats" class="status"></div></div>
+</div>
+</section></details><details id="aiPromptPanel"><summary>AI素材のプロンプトを作る（全素材共通アート規格）</summary><section class="prompt-maker" aria-labelledby="promptTitle">
+<h2 id="promptTitle">AI素材プロンプト生成 <span class="badge">Codex正式64色＋固定2D投影</span></h2>
+<p class="muted">Codexのart_standard_v1に合わせ、57.6×36の床、固定2D投影、facing、(29,57)アンカー、正式64色を生成文に反映します。</p>
+<div class="prompt-grid">
+<div class="prompt-controls">
+<div class="wide"><label for="assetPreset">生成プリセット</label><select id="assetPreset"><option value="saku">主人公・榊 朔太郎（宮大工の息子）</option><option value="yokai">妖怪・敵キャラクター</option><option value="npc">仲間・NPC</option><option value="building">和風建築・廃墟</option><option value="tree">木・竹・植物</option><option value="rock">岩・石垣・鉱石</option><option value="terrain">地形・マップ素材</option><option value="custom">自由素材（世界観共通）</option></select></div>
+<div class="wide"><label for="assetName">素材名</label><input id="assetName" type="text" value="榊 朔太郎（宮大工の息子）" maxlength="100" autocomplete="off"></div>
+<div><label for="assetSize">完成キャンバス</label><select id="assetSize"><option value="64">64 × 64 px</option><option value="32">32 × 32 px</option><option value="96">96 × 96 px</option><option value="128">128 × 128 px</option><option value="192">192 × 192 px</option><option value="256">256 × 256 px</option></select></div>
+<div><label for="assetView">視点</label><select id="assetView"><option value="iso">斜め見下ろし（3/4ビュー）</option><option value="top">真上からの見下ろし</option><option value="side">横向き</option><option value="front">正面</option></select></div>
+<div class="wide" id="cameraLockGroup" style="border:1px solid #42675f;border-radius:9px;padding:12px;background:#152b2a">
+<label for="cameraDirection" style="font-weight:700;color:#8de2c8">キャラクターの向き facing（固定2D投影）</label>
+<select id="cameraDirection">
+<option value="se">down_right / 右下（+1,0）</option>
+<option value="sw">down_left / 左下（0,+1）</option>
+<option value="ne">up_right / 右上（0,-1）</option>
+<option value="nw">up_left / 左上（-1,0）</option>
+</select>
+<label style="display:flex;gap:9px;align-items:center;margin-top:10px;cursor:pointer"><input id="lockDirection" type="checkbox" checked style="width:18px;height:18px;accent-color:#61c2ad"><span>選択したfacingをプロンプトに明記</span></label>
+<p id="cameraDirectionHelp" class="muted" style="margin:7px 0 0">カメラは常に固定。選択するのはキャラの向きだけです。</p>
+</div>
+<div><label for="assetWorld">世界観・画風</label><select id="assetWorld"><option value="wafu">FRONTIER TACTICS／戦国妖怪ファンタジー</option><option value="frontier">FRONTIER TACTICS／中世ファンタジー</option><option value="ruins">転生ローグライク／現実的な廃墟</option><option value="neutral">汎用レトロRPG</option></select></div>
+<div><label for="assetPalette">色数の目安</label><select id="assetPalette"><option value="12">最大12色程度</option><option value="16">最大16色程度</option><option value="20">最大20色程度</option><option value="24">最大24色程度</option><option value="32">最大32色程度</option><option value="free">指定なし</option></select></div>
+<div class="wide"><label for="assetDetails">追加の希望（任意）</label><input id="assetDetails" type="text" placeholder="例：手拭いを巻く、木槌を肩に担ぐ、歩行前の待機姿勢" maxlength="400"></div>
+<div class="wide"><div class="prompt-palette-heading"><label>FRONTIER TACTICS 共通64色パレット</label><span id="swatchStatus" class="muted"></span></div><p class="muted">Codex正式64色（基準48色＋追加16色）。新規候補用。クリックでHEXコピー。既存採用済みPNGは変更しません。</p><div id="characterSwatches" class="world-swatches" aria-label="全素材共通64色パレット"></div><p class="muted">Codex確定 palette_64_v1.json に完全一致（基準キャラ48色＋追加16色）。既存採用素材の色を自動変更しません。</p></div>
+</div>
+<div><label for="generatedPrompt">ChatGPTに渡すプロンプト（自動生成・直接編集も可能）</label><textarea id="generatedPrompt" spellcheck="false" aria-live="polite"></textarea>
+<div class="actions"><button class="primary" id="copyPrompt" type="button">プロンプトをコピー</button><button id="downloadPrompt" type="button">TXTで保存</button><button id="restorePrompt" type="button">条件から再生成</button></div>
+<div id="promptStatus" class="status" role="status"></div>
+<p class="muted">※画像生成AIが最初から指定サイズ・指定色数を守る保証はありません。生成後に実寸・アルファ透明度を検査し、必要ならピクセル処理で補正する流れです。</p>
+</div>
+</div></section>
+</details><details id="updatePanel" class="update-panel"><summary>アプリの更新・オンライン版（同じURLで最新版を使う）</summary>
+<div class="update-content"><h3>更新方法</h3><p class="muted">このHTMLをPCから開く場合は自動上書きできません。GitHub Pagesなどに <code>index.html</code> として公開すれば、今後は同じURLを開くだけで更新版を使えます。</p>
+<div class="update-fields"><label for="onlineUrl">公開したPixelFit StudioのURL</label><input type="url" id="onlineUrl" placeholder="https://ユーザー名.github.io/リポジトリ名/" autocomplete="url" spellcheck="false"><button id="saveOnlineUrl" type="button">URLを保存</button><button class="primary" id="openOnline" type="button">オンライン最新版を開く</button></div>
+<div id="updateStatus" class="status" role="status"></div><p class="muted">公開URLが未設定の場合は、まずGitHub Pagesに設置してください。編集中の画像はページ移動で消える場合があるため、PNG保存後にオンライン版を開いてください。</p></div></details></section><footer>PixelFit Studio · オフライン動作 / サーバー送信なし / ブラウザのCanvas API使用</footer>
+<script>
+'use strict';
+window.PIXELFIT_ART=Object.freeze({"version":"1.9","paletteId":"frontier_shared_64_v1","paletteGroups":[["基準キャラ色 1",["#000012","#010015","#07031C","#1C102C","#29233F","#2A1834","#312D44","#361D2F"]],["基準キャラ色 2",["#3C3E4F","#3D223C","#3F2D41","#454E54","#46333D","#4A2135","#4B6148","#4F373A"]],["基準キャラ色 3",["#575C57","#577944","#582531","#58303A","#5E5750","#613C37","#632A2E","#656A64"]],["基準キャラ色 4",["#6D3430","#704A3E","#7D7F74","#803F31","#826656","#845A45","#8B4D39","#908F7E"]],["基準キャラ色 5",["#9A6849","#9D9F8C","#AD7E56","#ADB199","#B44F3B","#B87455","#C7B987","#C89363"]],["基準キャラ色 6",["#CCD1B4","#D37358","#D98265","#E5C17B","#E78F6E","#F6F9D6","#FBB686","#FFC591"]],["追加材質色 1",["#101919","#202C31","#303C3E","#3E4B50","#536E72","#7B8885","#B0B5A2","#DDE0C8"]],["追加材質色 2",["#223A33","#344D3E","#465B46","#647653","#7B8761","#8E7650","#A68B56","#754D40"]]],"palette":["#000012","#010015","#07031C","#1C102C","#29233F","#2A1834","#312D44","#361D2F","#3C3E4F","#3D223C","#3F2D41","#454E54","#46333D","#4A2135","#4B6148","#4F373A","#575C57","#577944","#582531","#58303A","#5E5750","#613C37","#632A2E","#656A64","#6D3430","#704A3E","#7D7F74","#803F31","#826656","#845A45","#8B4D39","#908F7E","#9A6849","#9D9F8C","#AD7E56","#ADB199","#B44F3B","#B87455","#C7B987","#C89363","#CCD1B4","#D37358","#D98265","#E5C17B","#E78F6E","#F6F9D6","#FBB686","#FFC591","#101919","#202C31","#303C3E","#3E4B50","#536E72","#7B8885","#B0B5A2","#DDE0C8","#223A33","#344D3E","#465B46","#647653","#7B8761","#8E7650","#A68B56","#754D40"],"style":"戦国時代を下敷きにした架空の日本。人間と妖怪、荒廃した社寺、竹林、石垣、木造家屋、職人の生活感。低彩度の自然な陰影、硬いピクセル境界、手描き感のある明快なシルエット。12×12菱形マップで判別しやすく、全素材のドット密度を統一。"})
+</script>
+<script>
+'use strict';
+const demoRef='data:image/png;base64,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',demoSrc='data:image/png;base64,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';
+const $=id=>document.getElementById(id);const canvases=['reference','source','result'];const contexts=Object.fromEntries(canvases.map(k=>[k,$(k).getContext('2d',{willReadFrequently:true})]));
+let w=64,h=64,ref=null,src=null,out=null,history=[],future=[],tool='move',drawing=false,mode='both',segments=[],previewData=null,moveStart=null;
+function preset(){segments=[{sy0:6,sy1:20,dy0:2,dy1:16,sx:100,cx:31,dx:0},{sy0:20,sy1:37,dy0:16,dy1:37,sx:110,cx:31,dx:0},{sy0:37,sy1:57,dy0:37,dy1:62,sx:110,cx:31,dx:0}];loadSegment();}
+function loadSegment(){const s=segments[+$('segment').value];for(const k of ['sy0','sy1','dy0','dy1','sx','cx','dx'])$(k).value=s[k];}
+function readSegment(){let s={};for(const k of ['sy0','sy1','dy0','dy1','sx','cx','dx'])s[k]=Number($(k).value);if(Object.values(s).some(v=>!Number.isFinite(v)))throw Error('数値が不正です');if(s.sy0<0||s.sy1>h||s.sy0>=s.sy1||s.dy0<0||s.dy1>h||s.dy0>=s.dy1||s.sx<50||s.sx>200)throw Error('範囲の設定を確認してください');segments[+$('segment').value]=s;}
+function message(t){$('msg').textContent=t;}
+function canvasSize(){for(const k of canvases){$(k).width=w;$(k).height=h;contexts[k].imageSmoothingEnabled=false;}
+ const ratio=`${w} / ${h}`;
+ document.querySelector('.edit-viewport').style.width=`min(100%, ${Math.min(580,Math.round(580*w/Math.max(w,h)))}px)`;
+ document.querySelector('.edit-viewport').style.maxHeight='none';
+ document.querySelector('.edit-viewport').style.aspectRatio=ratio;
+ document.querySelectorAll('.mini-preview .viewport').forEach(v=>v.style.aspectRatio=ratio);
+ $('canvasWidth').value=w;$('canvasHeight').value=h;
+ const option=Array.from($('canvasPreset').options).find(o=>o.value===`${w}x${h}`);
+ $('canvasPreset').value=option?option.value:'custom';
+}
+function imgData(im){const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0);return c.getContext('2d').getImageData(0,0,w,h);}
+function loadImage(url,kind){const im=new Image();im.onload=()=>{if(kind==='src'){w=im.naturalWidth;h=im.naturalHeight;if(w>512||h>512){message('最大512×512まで対応');return}canvasSize();src=imgData(im);out=clone(src);previewData=null;history=[];future=[];resetTransformControls();if(ref&&(ref.width!==w||ref.height!==h))ref=null;if(w===64&&h===64)preset();else resetRegions();}else{if(im.naturalWidth!==w||im.naturalHeight!==h){message('基準画像と編集対象のキャンバス寸法を揃えてください');return}ref=imgData(im);}draw();message('読み込み完了');};im.onerror=()=>message('画像を読み込めませんでした');im.src=url;}
+function clone(d){return new ImageData(new Uint8ClampedArray(d.data),d.width,d.height)}
+function bbox(d){if(!d)return '未設定';let x0=w,y0=h,x1=-1,y1=-1;for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(d.data[(y*w+x)*4+3]){x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y)}return x1<0?'空画像':`${x1-x0+1}×${y1-y0+1}px / x:${x0}–${x1}, y:${y0}–${y1}`}
+function draw(){for(const [key,d] of [['reference',ref],['source',src],['result',previewData||out]]){const c=contexts[key];c.clearRect(0,0,w,h);if(d)c.putImageData(d,0,0)}$('refStat').textContent=bbox(ref);$('srcStat').textContent=bbox(src);$('outStat').textContent=`キャンバス ${w}×${h}px / `+bbox(previewData||out)+(previewData?' · プレビュー中':'');const cv=$('result'),ctx=contexts.result;if($('guides').checked){ctx.save();ctx.fillStyle='#37e9b2';for(const s of segments){ctx.fillRect(0,Math.max(0,s.dy0),w,1);ctx.fillRect(0,Math.min(h-1,s.dy1),w,1)}ctx.restore()}if($('grid').checked&&w<=128){ctx.save();ctx.fillStyle='rgba(0,0,0,.25)';for(let x=0;x<w;x++)for(let y=0;y<h;y++)if(x%8===0||y%8===0)ctx.fillRect(x,y,1,1);ctx.restore()}}
+function snapshot(){return {w,h,out:out?clone(out):null,src:src?clone(src):null,ref:ref?clone(ref):null}}
+function restoreSnapshot(s){w=s.w;h=s.h;out=s.out?clone(s.out):null;src=s.src?clone(s.src):null;ref=s.ref?clone(s.ref):null;previewData=null;canvasSize();resetTransformControls();resetRegions();draw()}
+function push(){if(!out)return;history.push(snapshot());if(history.length>40)history.shift();future=[]}
+function resetRegions(){const a=Math.max(1,Math.floor(h/3)),b=Math.max(2,Math.floor(h*2/3));segments=[{sy0:0,sy1:a,dy0:0,dy1:a,sx:100,cx:Math.floor(w/2),dx:0},{sy0:a,sy1:b,dy0:a,dy1:b,sx:100,cx:Math.floor(w/2),dx:0},{sy0:b,sy1:h,dy0:b,dy1:h,sx:100,cx:Math.floor(w/2),dx:0}];$('segment').value='0';loadSegment()}
+function translateImage(d,newW,newH,dx,dy){if(!d)return null;const dest=new ImageData(newW,newH);for(let y=0;y<d.height;y++){const ny=y+dy;if(ny<0||ny>=newH)continue;for(let x=0;x<d.width;x++){const nx=x+dx;if(nx<0||nx>=newW)continue;const a=(y*d.width+x)*4,b=(ny*newW+nx)*4;for(let i=0;i<4;i++)dest.data[b+i]=d.data[a+i]}}return dest}
+function resizeEditor(newW,newH,blank=false){
+ newW=clamp(newW,8,512,64);newH=clamp(newH,8,512,64);
+ if(previewData)applyTransform();
+ if(!blank&&newW===w&&newH===h){message('すでに指定されたキャンバスサイズです');return}
+ if(out)push();
+ if(blank){w=newW;h=newH;out=new ImageData(w,h);src=clone(out);ref=null;history=[];future=[]}
+ else{
+  let dx=Math.round((newW-w)/2),dy=Math.round((newH-h)/2);
+  if($('canvasAnchor').value==='feet'&&out){const b=opaqueBounds(out);if(b){dx=Math.round((newW-b.width)/2)-b.x0;dy=newH-4-b.height-b.y0}}
+  const nextOut=translateImage(out,newW,newH,dx,dy),nextSrc=translateImage(src,newW,newH,dx,dy);
+  const nextRef=translateImage(ref,newW,newH,dx,dy);
+  w=newW;h=newH;out=nextOut||new ImageData(w,h);src=nextSrc||clone(out);ref=nextRef;
+ }
+ resetTransformControls();canvasSize();resetRegions();draw();
+ message(`${w}×${h}pxの${blank?'透明キャンバスを作成':'キャンバスに変更'}しました。絵のピクセル自体は拡大縮小していません。`)
+}
+$('canvasPreset').addEventListener('change',e=>{if(e.target.value==='custom')return;const [a,b]=e.target.value.split('x').map(Number);$('canvasWidth').value=a;$('canvasHeight').value=b});
+for(const id of ['canvasWidth','canvasHeight'])$(id).addEventListener('input',()=>{$('canvasPreset').value='custom'});
+$('resizeCanvas').onclick=()=>resizeEditor($('canvasWidth').value,$('canvasHeight').value);
+$('blankCanvas').onclick=()=>{if(out&&opaqueBounds(out)&&!confirm('現在の画像を消して新しい透明キャンバスを作ります。よろしいですか？'))return;resizeEditor($('canvasWidth').value,$('canvasHeight').value,true)};
+function remap(){if(previewData)cancelTransform();readSegment();if(!src)return;for(let i=0;i<segments.length;i++){let s=segments[i];if(s.sy1>h||s.dy1>h)throw Error('画像の高さを超える範囲があります');if(i&&s.dy0<segments[i-1].dy1)throw Error('出力範囲が重複しています')}push();const dest=new ImageData(w,h);for(const s of segments){for(let y=s.dy0;y<s.dy1;y++){const sy=s.sy0+Math.floor((y-s.dy0)*(s.sy1-s.sy0)/(s.dy1-s.dy0));for(let x=0;x<w;x++){const xx=x-s.dx;const sx=Math.round(s.cx+(xx-s.cx)/(s.sx/100));if(sx<0||sx>=w||sy<0||sy>=h)continue;const a=(sy*w+sx)*4,b=(y*w+x)*4;for(let i=0;i<4;i++)dest.data[b+i]=src.data[a+i]}}}out=dest;draw();message('領域を再配置しました。必要なら境界を手描き修正してください')}
+// Preview transforms from original pixels, so moving a scaled object never
+// repeatedly resamples or permanently clips it until the user commits.
+function opaqueBounds(d){
+ if(!d)return null;
+ let x0=w,y0=h,x1=-1,y1=-1;
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(d.data[(y*w+x)*4+3]){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y)}
+ return x1<0?null:{x0,y0,x1,y1,width:x1-x0+1,height:y1-y0+1};
+}
+function clamp(n,min,max,fallback){n=Number(n);return Number.isFinite(n)?Math.max(min,Math.min(max,Math.round(n))):fallback}
+function resetTransformControls(){
+ $('overallScale').value=100;$('overallScaleNum').value=100;$('overallScaleLabel').textContent='100%';
+ $('moveX').value=0;$('moveY').value=0;previewData=null;
+}
+function syncOverallScale(value){const n=clamp(value,25,300,100);$('overallScale').value=n;$('overallScaleNum').value=n;$('overallScaleLabel').textContent=n+'%';refreshTransform()}
+function buildTransform(d){
+ const b=opaqueBounds(d);if(!b)return clone(d);
+ const factor=clamp($('overallScaleNum').value,25,300,100)/100;
+ const dx=clamp($('moveX').value,-512,512,0),dy=clamp($('moveY').value,-512,512,0);
+ const newW=Math.max(1,Math.round(b.width*factor)),newH=Math.max(1,Math.round(b.height*factor));
+ const startX=Math.round((b.x0+b.x1)/2-(newW-1)/2)+dx;
+ const startY=($('overallAnchor').value==='feet'?b.y1-newH+1:Math.round((b.y0+b.y1)/2-(newH-1)/2))+dy;
+ const dest=new ImageData(w,h);
+ for(let ty=0;ty<newH;ty++){
+  const y=startY+ty;if(y<0||y>=h)continue;
+  const sy=b.y0+Math.min(b.height-1,Math.floor((ty+.5)*b.height/newH));
+  for(let tx=0;tx<newW;tx++){
+   const x=startX+tx;if(x<0||x>=w)continue;
+   const sx=b.x0+Math.min(b.width-1,Math.floor((tx+.5)*b.width/newW));
+   const si=(sy*w+sx)*4,di=(y*w+x)*4;
+   for(let k=0;k<4;k++)dest.data[di+k]=d.data[si+k];
+  }
+ }
+ return dest;
+}
+function refreshTransform(){
+ if(!out)return;
+ const scale=clamp($('overallScaleNum').value,25,300,100);
+ const dx=clamp($('moveX').value,-512,512,0),dy=clamp($('moveY').value,-512,512,0);
+ previewData=(scale===100&&dx===0&&dy===0)?null:buildTransform(out);
+ draw();$('transformHint').textContent=previewData?'プレビュー中。ドラッグで位置を調整できます。よければ「変更を確定」を押してください。':'倍率や位置を変えると右側にプレビューされます。';
+}
+function applyTransform(){
+ if(!previewData){message('変更はありません');return}
+ push();out=clone(previewData);resetTransformControls();draw();message('大きさ・位置を確定しました。Undoで戻せます。');
+}
+function cancelTransform(){resetTransformControls();draw();message('未確定の調整を取り消しました');}
+function nudge(dx,dy){$('moveX').value=clamp(Number($('moveX').value)+dx,-512,512,0);$('moveY').value=clamp(Number($('moveY').value)+dy,-512,512,0);refreshTransform()}
+$('overallScale').addEventListener('input',e=>syncOverallScale(e.target.value));
+$('overallScaleNum').addEventListener('input',e=>{if(e.target.value!=='')syncOverallScale(e.target.value)});
+$('overallScaleNum').addEventListener('change',e=>syncOverallScale(e.target.value));
+$('overallAnchor').addEventListener('change',refreshTransform);
+for(const id of ['moveX','moveY'])$(id).addEventListener('input',refreshTransform);
+$('applyOverallScale').addEventListener('click',applyTransform);
+$('resetOverallScale').addEventListener('click',cancelTransform);
+$('nudgeLeft').onclick=()=>nudge(-1,0);$('nudgeRight').onclick=()=>nudge(1,0);
+$('nudgeUp').onclick=()=>nudge(0,-1);$('nudgeDown').onclick=()=>nudge(0,1);
+$('centerObject').onclick=()=>{if(!out)return;const b=opaqueBounds(out);if(!b)return;const factor=clamp($('overallScaleNum').value,25,300,100)/100;const nw=Math.max(1,Math.round(b.width*factor)),nh=Math.max(1,Math.round(b.height*factor));const sx=Math.round((b.x0+b.x1)/2-(nw-1)/2),sy=$('overallAnchor').value==='feet'?b.y1-nh+1:Math.round((b.y0+b.y1)/2-(nh-1)/2);$('moveX').value=Math.round((w-nw)/2)-sx;$('moveY').value=Math.round((h-nh)/2)-sy;refreshTransform()};
+function setTool(t){tool=t;for(const id of ['moveTool','brush','eraser','pick'])$(id).classList.toggle('active',id===(t==='move'?'moveTool':t));$('result').classList.toggle('pencil-cursor',t!=='move')}
+function pos(e){const r=$('result').getBoundingClientRect();return [Math.floor((e.clientX-r.left)*w/r.width),Math.floor((e.clientY-r.top)*h/r.height)]}
+function paint(e){if(!out)return;const [x,y]=pos(e);if(x<0||y<0||x>=w||y>=h)return;const idx=(y*w+x)*4;if(tool==='pick'){const c=out.data;$('color').value='#'+[c[idx],c[idx+1],c[idx+2]].map(v=>v.toString(16).padStart(2,'0')).join('');setTool('brush');return}const hex=$('color').value;const rgb=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));const size=+$('size').value;for(let yy=y-Math.floor(size/2);yy<y-Math.floor(size/2)+size;yy++)for(let xx=x-Math.floor(size/2);xx<x-Math.floor(size/2)+size;xx++){if(xx<0||yy<0||xx>=w||yy>=h)continue;const j=(yy*w+xx)*4;for(let k=0;k<4;k++)out.data[j+k]=tool==='eraser'?0:k===3?255:rgb[k]}draw()}
+function download(blob,name){const a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500)}
+function fileChange(id,kind){$(id).addEventListener('change',e=>{const f=e.target.files[0];if(f){const u=URL.createObjectURL(f);loadImage(u,kind);setTimeout(()=>URL.revokeObjectURL(u),5000)}})}
+fileChange('refFile','ref');fileChange('srcFile','src');$('segment').onchange=loadSegment;$('apply').onclick=()=>{try{remap()}catch(e){message(e.message)}};$('preset').onclick=()=>{preset();try{remap()}catch(e){message(e.message)}};
+$('reset').onclick=()=>{if(src){cancelTransform();push();out=clone(src);draw();message('編集対象の元画像に戻しました')}};
+$('undo').onclick=()=>{if(previewData)cancelTransform();if(history.length){future.push(snapshot());restoreSnapshot(history.pop())}};$('redo').onclick=()=>{if(previewData)cancelTransform();if(future.length){history.push(snapshot());restoreSnapshot(future.pop())}};
+for(const t of ['brush','eraser','pick'])$(t).onclick=()=>setTool(t);$('moveTool').onclick=()=>setTool('move');$('size').oninput=()=>$('sizeLabel').textContent=$('size').value+'px';for(const t of ['grid','guides'])$(t).onchange=draw;
+const edit=$('result');
+edit.addEventListener('pointerdown',e=>{
+ if(!out)return;
+ edit.setPointerCapture(e.pointerId);
+ if(tool==='move'){moveStart={x:e.clientX,y:e.clientY,dx:clamp($('moveX').value,-512,512,0),dy:clamp($('moveY').value,-512,512,0)};return}
+ if(previewData)applyTransform();
+ drawing=true;push();paint(e);
+});
+edit.addEventListener('pointermove',e=>{
+ if(moveStart){const r=edit.getBoundingClientRect();$('moveX').value=clamp(moveStart.dx+Math.round((e.clientX-moveStart.x)*w/r.width),-512,512,0);$('moveY').value=clamp(moveStart.dy+Math.round((e.clientY-moveStart.y)*h/r.height),-512,512,0);refreshTransform();return}
+ if(drawing)paint(e);
+});
+edit.addEventListener('pointerup',()=>{drawing=false;moveStart=null});
+edit.addEventListener('pointercancel',()=>{drawing=false;moveStart=null});
+$('export').onclick=()=>{if(!out)return;if(previewData)applyTransform();const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').putImageData(out,0,0);c.toBlob(b=>download(b,`pixelfit_${w}x${h}.png`),'image/png')};
+$('saveSettings').onclick=()=>download(new Blob([JSON.stringify({version:1,width:w,height:h,segments},null,2)],{type:'application/json'}),'pixelfit_settings.json');$('loadSettings').onclick=()=>$('settingsFile').click();$('settingsFile').onchange=async e=>{try{const j=JSON.parse(await e.target.files[0].text());if(!Array.isArray(j.segments)||j.segments.length!==3)throw Error('設定形式が不正です');segments=j.segments;loadSegment();remap()}catch(err){message(err.message)}};
+preset();loadImage(demoSrc,'src');setTimeout(()=>loadImage(demoRef,'ref'),80);
+</script><script>
+'use strict';
+(function(){
+const get=id=>document.getElementById(id);
+const ART=window.PIXELFIT_ART;
+const views={iso:'既存Godot盤面と同じ固定2D平行投影（床57.6×36px、1.6:1）。キャラは頭頂と正面・片側面、建物は屋根と正面・側面が見える。カメラは回さない。',top:'真上からの2D見下ろし',side:'横向き',front:'正面'};
+const CAMERA_DIRECTIONS={
+ se:{id:'down_right',jp:'画面右下（↘）',delta:'(+1,0)',screen:'(+28.8,+18)',atlas:'1（RIGHT）'},
+ sw:{id:'down_left',jp:'画面左下（↙）',delta:'(0,+1)',screen:'(-28.8,+18)',atlas:'0（DOWN）'},
+ ne:{id:'up_right',jp:'画面右上（↗）',delta:'(0,-1)',screen:'(+28.8,-18)',atlas:'2（UP）'},
+ nw:{id:'up_left',jp:'画面左上（↖）',delta:'(-1,0)',screen:'(-28.8,-18)',atlas:'3（LEFT）'}
+}
+const worlds={wafu:ART.style,frontier:'中世ファンタジー。落ち着いたアースカラー、左上光源、整理されたドット表現。',ruins:'現実的な廃墟・日用品。低彩度、明確な輪郭、2Dドット絵。',neutral:'汎用レトロRPG。明確な輪郭と統一光源、低ノイズ。'};
+const types={
+ saku:{name:'榊 朔太郎（宮大工の息子）',size:'64',colors:'16',role:'主人公キャラクター',extra:'19歳の宮大工の息子・見習い。黒髪・太眉・約3頭身。藍染めの短い仕事着、茶色の股引・脚絆・草鞋、手拭い。腰に墨壺・曲尺・鑿・道具袋。父の木槌を手に持つか肩に担ぐ。刀・鎧・兜・西洋騎士風は不可。職人としてのシルエットを重視。左手の火傷痕は判別できる場合のみ。'},
+ yokai:{name:'鬼',size:'64',colors:'20',role:'妖怪キャラクター',extra:'日本の伝承を出発点にした妖怪。既存の西洋モンスターの単純な和風化は避け、伝承に由来する特徴がシルエットと行動から読み取れる。'},
+ npc:{name:'弓足軽',size:'64',colors:'16',role:'味方ユニット',extra:'戦国の庶民や職人、足軽を参考にした生活感。役割を道具とシルエットで一目で判別できる。'},
+ building:{name:'崩れた神社',size:'128',colors:'32',role:'建物・廃墟',extra:'日本の木造建築、瓦・茅葺き・土壁・石垣・組木を参考にする。西洋の石造城塞・洋館・大聖堂は避ける。足元と占有マスの判定位置がわかる。'},
+ tree:{name:'御神木',size:'128',colors:'16',role:'樹木・植物',extra:'日本の植生（杉・松・竹・広葉樹など）。幹と樹冠の境界が明確で、幹の根元を配置基準にできる。'},
+ rock:{name:'苔むした岩',size:'64',colors:'12',role:'岩・石材',extra:'日本の山野に馴染む自然石・苔・石垣。戦術マップで障害物として判別できる。'},
+ terrain:{name:'石畳',size:'64',colors:'12',role:'地形・マップ素材',extra:'和風の地面・石畳・土道・水田など。必要な場合のみタイルとして継ぎ目が自然になる構成。過剰な描き込みを避ける。'},
+ custom:{name:'木',size:'128',colors:'24',role:'ドット絵オブジェクト',extra:'和風世界の生活感と戦術ゲームの視認性を両立する。'}
+};
+// One shared palette for every material. Keep the 16-color hero set as a subset.
+const swatches=get('characterSwatches');
+ART.paletteGroups.forEach(([group,colors])=>{
+ const wrap=document.createElement('div');wrap.className='world-swatch-group';
+ const title=document.createElement('span');title.className='world-swatch-name';title.textContent=group;wrap.appendChild(title);
+ const line=document.createElement('div');line.className='world-swatch-row';
+ colors.forEach(hex=>{const btn=document.createElement('button');btn.type='button';btn.className='character-swatch';btn.style.backgroundColor=hex;btn.title=`${group} ${hex}（クリックでコピー）`;btn.setAttribute('aria-label',`${hex} をコピー`);btn.onclick=async()=>{try{await navigator.clipboard.writeText(hex);get('swatchStatus').textContent=`${hex} コピー済み`;}catch(e){get('swatchStatus').textContent=`${hex} を手入力してください`}};line.appendChild(btn)});
+ wrap.appendChild(line);swatches.appendChild(wrap);
+});
+function generate(){
+ const name=get('assetName').value.trim()||'（素材名を入力）';
+ const size=Number(get('assetSize').value),view=views[get('assetView').value];
+ const world=worlds[get('assetWorld').value];
+ const paletteLimit=get('assetPalette').value;
+ const details=get('assetDetails').value.trim();
+ const kind=get('assetPreset').value,asset=types[kind]||types.custom;
+ const isWafu=get('assetWorld').value==='wafu';
+ const isIso=get('assetView').value==='iso';
+ const direction=CAMERA_DIRECTIONS[get('cameraDirection').value]||CAMERA_DIRECTIONS.se;
+ const locked=get('lockDirection').checked&&isIso;
+ const cameraGuide=locked?`【最重要：固定投影と向き（FRONTIER TACTICS art_standard_v1）】
+- 視点は固定の2D平行投影。Camera3Dは使用しない。画面上の菱形床は幅57.6×高さ36px（比率1.6:1）。通常の64×32px（2:1）タイルへ変更しない。
+- 投影：screen_x=origin_x+(grid_x-grid_y)*28.8、screen_y=origin_y+(grid_x+grid_y)*18.0、origin=(490,126)。水平に対する辺の傾きは約±32度。遠近法・消失点なし。人物や柱は画面に垂直。
+- 仰角約38.68度は投影から導かれる参考値であり、カメラを新設・回転する指定ではない。カメラの向きは全素材で固定する。
+- この素材のfacing ID：${direction.id}（${direction.jp}）。盤面移動差分${direction.delta}、画面移動差分${direction.screen}、旧アトラス対応行${direction.atlas}。
+- 人物の場合、顔・胸・つま先・装備の前後を${direction.jp}に統一する。別方向を描く際は同じカメラから対象だけを向け直す。PNGを45度回転させない。左右反転で代用しない。
+- 建物・樹木・岩など回転しない素材は facing=fixed としてよい。接地面の中央と占有範囲を別に定義する。
+- 生成画像が向きと異なれば採用せず修正する。必ず基準キャラ・57.6×36の床・4方向ガイドと並べて目視確認する。
+English: FIXED 2D PARALLEL PROJECTION, diamond tile 57.6x36 (1.6:1). Character FACING ${direction.id}. DO NOT rotate camera, DO NOT mirror sprite, DO NOT change projection, NO perspective.
+`:'';
+ const colorGuide=paletteLimit==='free'?'色数は必要最小限にし、共通パレットを優先する。':`この素材の不透明ピクセルは最大${paletteLimit}色程度を目標にする（ゲーム全体の64色とは別の上限）。`;
+ const paletteText=ART.paletteGroups.map(([group,colors])=>`${group}: ${colors.join(' / ')}`).join('\n');
+ const scene=isWafu?`【全素材共通のアート規格／FRONTIER TACTICS】\n- 世界観：${world}\n- 日本の文化・風習・伝承を形や材質に反映する。侍・妖怪・建築・植物・道具を同じ世界のものとして統一する。\n- 視点は既存の固定2D平行投影。床57.6×36px（1.6:1）、地上2軸は画面上の斜め方向、垂直軸は画面垂直。光源は左上。遠近法は禁止。\n- 1ピクセルの情報密度を素材間で揃える。32px絵の単純な4倍拡大と、128pxで細密に描いた絵を無秩序に混ぜない。\n- 基本64色の中から必要な色だけを使う。各素材は12〜24色を目安とし、複雑な大型建築のみ32色程度まで許容。\n- 木・石・布・金属などの材質は原則3〜4色の明暗段階。彩度は抑え、地面より味方ユニットや重要物が見分けやすい明度差を確保。\n- 全素材共通の正式64色 palette_64_v1.json（基準48色＋追加16色、HEX厳守）：\n${paletteText}\n- 可能な限りこの64色以外を追加しない。素材の使用色数が少ない場合は、64色から部分集合を選ぶ。\n`:`【アート規格】\n- ${world}\n- 光源とドット密度を同一ゲーム内の他素材と統一する。\n`;
+ return `FRONTIER TACTICS向けゲーム用${asset.role}「${name}」を1点制作してください。\n\n【最重要：納品物】\n- 最終納品は${size}×${size}pxの実寸PNGファイル1点（RGBA、背景アルファ透明）。\n- 文字、設定画、比較表、スプライトシート、チェック柄、額縁、UI、背景、床、別オブジェクトは描かない。\n- 全体をキャンバス内に収め、輪郭を切らず適度な透明余白を残す。
+- 人物64×64の場合、接地アンカーは画像座標(29,57)、頭頂から接地まで55px（頭頂基準Y=2）。4方向と全アニメフレームでアンカーを固定する。武器や帽子の高さを身長に含めない。
+- 木・岩・建物は底面中央を個別アンカーとしてメタデータに記載し、人物アンカー(29,57)を流用しない。\n\n【素材固有の指定】\n- 対象：${name}\n- 種別：${asset.role}\n- 視点：${view}\n${cameraGuide?cameraGuide+'\n':''}- デザイン指針：${asset.extra}\n- ${colorGuide}\n${details?`- 追加指定：${details}\n`:''}\n${scene}\n【ドット絵の品質】\n- ピクセルが1個ずつ判別できるネイティブなドット絵。アンチエイリアス、ぼかし、写真調の質感、連続グラデーションは禁止。\n- 1px単位で編集できる、整理されたシルエットと陰影。\n- 戦術ゲームの12×12菱形マップに並べたときに識別できる。\n\n【制作・検査】\n1. 単体のゲーム素材として設計する。\n2. AIの出力が${size}×${size}pxでなければ、最近傍補間を使って実寸PNGへ変換する。縮小で重要な形が潰れたら輪郭を修正する。\n3. 市松模様が焼き込まれていないか確認し、背景を透明化する。\n4. PNGをプログラムで開き、${size}×${size}px・RGBA・透明背景・使用色数・半透明画素を検査する。透明RGBは不問、アルファは0/255のみ。\n5. Codex正式64色以外の色があれば不適合として報告する。自動置換はしない。新規候補で明示的に承認された場合のみ色変換する。\n6. 完成PNGをファイルとして渡す。\n\n【次の工程】\nPixelFit Studioでアンカーガイド・55px身長ガイド・正式64色検査を行い、1px単位で手描き修正する。Godot確認シーンで方向と床との整合を目視確認し、承認後に本編登録する。既存採用済みPNGは上書きしない。`;
+}
+function update(){
+ const iso=get('assetView').value==='iso';
+ get('cameraDirection').disabled=!iso;
+ get('lockDirection').disabled=!iso;
+ get('cameraDirectionHelp').textContent=!iso?'斜め見下ろし以外ではfacing指定を適用しません。':get('lockDirection').checked?'固定2D投影は変えず、キャラのfacingのみ指定します。設定は素材プリセットを変えても保持します。':'facing明記がオフです。生成画像の向きは必ず目視確認してください。';
+ get('generatedPrompt').value=generate();
+ get('promptStatus').textContent=iso&&get('lockDirection').checked?'Codex正式アート規格＋facingを反映しました':'Codex正式アート規格を反映しました';
+}
+function setPreset(){const type=types[get('assetPreset').value]||types.custom;get('assetName').value=type.name;get('assetSize').value=type.size;get('assetView').value='iso';get('assetWorld').value='wafu';get('assetPalette').value=type.colors;get('assetDetails').value='';update()}
+get('assetPreset').addEventListener('change',setPreset);
+['assetName','assetDetails'].forEach(id=>get(id).addEventListener('input',update));
+['assetSize','assetView','assetWorld','assetPalette'].forEach(id=>get(id).addEventListener('change',update));
+try{
+ const saved=JSON.parse(localStorage.getItem('pixelfit_camera_lock_v18')||'null');
+ if(saved&&CAMERA_DIRECTIONS[saved.direction])get('cameraDirection').value=saved.direction;
+ if(saved&&typeof saved.locked==='boolean')get('lockDirection').checked=saved.locked;
+}catch(e){}
+function changeCamera(){
+ try{localStorage.setItem('pixelfit_camera_lock_v18',JSON.stringify({direction:get('cameraDirection').value,locked:get('lockDirection').checked}))}catch(e){}
+ update();
+}
+get('cameraDirection').addEventListener('change',changeCamera);
+get('lockDirection').addEventListener('change',changeCamera);
+get('restorePrompt').addEventListener('click',update);
+get('copyPrompt').addEventListener('click',async()=>{const value=get('generatedPrompt').value;try{await navigator.clipboard.writeText(value);get('promptStatus').textContent='コピーしました。ChatGPTに貼り付けてください';}catch(e){get('generatedPrompt').focus();get('generatedPrompt').select();const ok=document.execCommand('copy');get('promptStatus').textContent=ok?'コピーしました':'Ctrl+Cでコピーしてください'}});
+get('downloadPrompt').addEventListener('click',()=>{const blob=new Blob(['\ufeff',get('generatedPrompt').value],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='pixelfit_prompt.txt';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);get('promptStatus').textContent='テキストファイルを保存しました'});
+update();
+})();
+</script><script>
+'use strict';
+(function(){
+const el=id=>document.getElementById(id);
+let original=null,converted=null;
+const canvas=el('convertCanvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
+function status(t){el('convertStatus').textContent=t}
+function distance(a,b){return Math.max(Math.abs(a[0]-b[0]),Math.abs(a[1]-b[1]),Math.abs(a[2]-b[2]))}
+function removeCornerBackground(img,tolerance){
+ const {data,width:W,height:H}=img;
+ const at=(x,y)=>(y*W+x)*4;
+ const corner=[[0,0],[W-1,0],[0,H-1],[W-1,H-1]].map(([x,y])=>{let i=at(x,y);return [data[i],data[i+1],data[i+2]]});
+ const seen=new Uint8Array(W*H),queue=new Int32Array(W*H);
+ let head=0,tail=0;
+ function add(x,y){if(x<0||y<0||x>=W||y>=H)return;let p=y*W+x;if(seen[p])return;let i=p*4,rgba=[data[i],data[i+1],data[i+2]];if(data[i+3]===0||corner.some(c=>distance(c,rgba)<=tolerance)){seen[p]=1;queue[tail++]=p}}
+ for(let x=0;x<W;x++){add(x,0);add(x,H-1)}
+ for(let y=0;y<H;y++){add(0,y);add(W-1,y)}
+ while(head<tail){const p=queue[head++],x=p%W,y=(p/W)|0;add(x-1,y);add(x+1,y);add(x,y-1);add(x,y+1)}
+ for(let p=0;p<W*H;p++)if(seen[p])data[p*4+3]=0;
+}
+function bounds(d,W,H){let x0=W,y0=H,x1=-1,y1=-1;for(let y=0;y<H;y++)for(let x=0;x<W;x++){let i=(y*W+x)*4;if(d[i+3]>=32){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y)}}return x1<0?null:{x:x0,y:y0,w:x1-x0+1,h:y1-y0+1}}
+function quantize(data,maxColors){
+ if(!maxColors)return;
+ const histogram=new Map();
+ for(let i=0;i<data.length;i+=4)if(data[i+3]>=32){const key=(data[i]<<16)|(data[i+1]<<8)|data[i+2];histogram.set(key,(histogram.get(key)||0)+1)}
+ if(histogram.size<=maxColors)return;
+ // Frequency-weighted median cut, RGB colors, with alpha untouched.
+ let boxes=[Array.from(histogram,([color,n])=>({rgb:[color>>16,(color>>8)&255,color&255],n}))];
+ while(boxes.length<maxColors){
+  let best=-1,bestScore=-1,axis=0;
+  boxes.forEach((box,idx)=>{if(box.length<2)return;for(let k=0;k<3;k++){let vals=box.map(c=>c.rgb[k]),range=Math.max(...vals)-Math.min(...vals);if(range>bestScore){best=idx;bestScore=range;axis=k}}});
+  if(best<0||bestScore<=0)break;
+  const box=boxes.splice(best,1)[0].sort((a,b)=>a.rgb[axis]-b.rgb[axis]);
+  let sum=box.reduce((n,c)=>n+c.n,0),cum=0,split=1;
+  for(let i=0;i<box.length-1;i++){cum+=box[i].n;if(cum>=sum/2){split=i+1;break}}
+  boxes.push(box.slice(0,split),box.slice(split));
+ }
+ const palette=boxes.map(box=>{let n=box.reduce((a,c)=>a+c.n,0);return [0,1,2].map(k=>Math.round(box.reduce((a,c)=>a+c.rgb[k]*c.n,0)/n))});
+ for(let i=0;i<data.length;i+=4)if(data[i+3]>=32){let best=palette[0],dist=Infinity;for(const p of palette){let d=(data[i]-p[0])**2+(data[i+1]-p[1])**2+(data[i+2]-p[2])**2;if(d<dist){dist=d;best=p}}data[i]=best[0];data[i+1]=best[1];data[i+2]=best[2];data[i+3]=255}
+}
+function quantizeSharedPalette(data){
+ const rgb=window.PIXELFIT_ART.palette.map(hex=>[parseInt(hex.slice(1,3),16),parseInt(hex.slice(3,5),16),parseInt(hex.slice(5,7),16)]);
+ const cache=new Map();
+ for(let i=0;i<data.length;i+=4){
+  if(data[i+3]<128)continue;
+  const key=(data[i]<<16)|(data[i+1]<<8)|data[i+2];let p=cache.get(key);
+  if(!p){let dist=Infinity;for(const color of rgb){const d=(data[i]-color[0])**2*0.30+(data[i+1]-color[1])**2*0.59+(data[i+2]-color[2])**2*0.11;if(d<dist){dist=d;p=color}}cache.set(key,p)}
+  data[i]=p[0];data[i+1]=p[1];data[i+2]=p[2];
+ }
+}
+function run(){
+ if(!original){status('先に画像を選んでください');return}
+ const S=Number(el('convertSize').value),pad=Number(el('convertPadding').value);
+ const W=original.naturalWidth,H=original.naturalHeight;
+ // Scale input to a bounded working size to avoid massive memory/CPU costs.
+ const scale=Math.min(1,1600/Math.max(W,H)),iw=Math.max(1,Math.round(W*scale)),ih=Math.max(1,Math.round(H*scale));
+ const temp=document.createElement('canvas');temp.width=iw;temp.height=ih;
+ const tc=temp.getContext('2d',{willReadFrequently:true});tc.drawImage(original,0,0,iw,ih);
+ const pixels=tc.getImageData(0,0,iw,ih),d=pixels.data;
+ const hadAlpha=(()=>{for(let i=3;i<d.length;i+=4)if(d[i]<250)return true;return false})();
+ const bg=el('convertBackground').value;
+ if(bg==='corners'||(bg==='auto'&&!hadAlpha))removeCornerBackground(pixels,Number(el('convertTolerance').value));
+ tc.putImageData(pixels,0,0);
+ const bb=bounds(pixels.data,iw,ih);
+ if(!bb){status('被写体が検出できません。背景除去の許容差を下げてください');return}
+ const available=S-2*pad,factor=Math.min(available/bb.w,available/bb.h);
+ const dw=Math.max(1,Math.round(bb.w*factor)),dh=Math.max(1,Math.round(bb.h*factor));
+ canvas.width=S;canvas.height=S;ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,S,S);
+ ctx.drawImage(temp,bb.x,bb.y,bb.w,bb.h,Math.floor((S-dw)/2),Math.floor((S-dh)/2),dw,dh);
+ converted=ctx.getImageData(0,0,S,S);
+ if(el('convertPalette').value==='shared64')quantizeSharedPalette(converted.data);
+ else quantize(converted.data,Number(el('convertPalette').value));
+ // Remove semitransparent edges: no blurry pixels in the exported sprite.
+ for(let i=0;i<converted.data.length;i+=4)converted.data[i+3]=converted.data[i+3]>=128?255:0;
+ ctx.putImageData(converted,0,0);
+ let transparent=0,colors=new Set();for(let i=0;i<converted.data.length;i+=4){if(!converted.data[i+3])transparent++;else colors.add(converted.data[i]+','+converted.data[i+1]+','+converted.data[i+2])}
+ el('convertStats').textContent=`${W}×${H} → ${S}×${S} / RGBA / 透明 ${transparent} px / 使用色 ${colors.size} 色`;
+ el('convertToEditor').disabled=false;el('convertDownload').disabled=false;
+ status('変換完了。プレビューを確認して編集画面に送れます。');
+}
+el('convertFile').onchange=e=>{
+ const file=e.target.files&&e.target.files[0];if(!file)return;
+ const url=URL.createObjectURL(file),im=new Image();
+ im.onload=()=>{original=im;URL.revokeObjectURL(url);status(`読み込み: ${im.naturalWidth}×${im.naturalHeight}px`);run()};
+ im.onerror=()=>{URL.revokeObjectURL(url);status('画像を開けませんでした')};im.src=url;
+};
+el('convertRun').onclick=run;
+el('convertTolerance').oninput=()=>el('convertToleranceValue').textContent=el('convertTolerance').value;
+el('convertToEditor').onclick=()=>{
+ if(!converted)return;
+ w=converted.width;h=converted.height;canvasSize();src=clone(converted);out=clone(converted);ref=null;history=[];future=[];
+ // Adapt the three editor regions to arbitrary output sizes.
+ const a=Math.floor(h*.33),b=Math.floor(h*.66);
+ segments=[{sy0:0,sy1:a,dy0:0,dy1:a,sx:100,cx:Math.floor(w/2),dx:0},{sy0:a,sy1:b,dy0:a,dy1:b,sx:100,cx:Math.floor(w/2),dx:0},{sy0:b,sy1:h,dy0:b,dy1:h,sx:100,cx:Math.floor(w/2),dx:0}];
+ el('segment').value='0';loadSegment();draw();view('edit');
+ message(`${w}×${h}の変換画像を編集画面へ読み込みました。ペン・消しゴムで修正できます。`);
+ document.getElementById('editorMain').scrollIntoView({behavior:'smooth',block:'start'});
+};
+el('convertDownload').onclick=()=>{
+ if(!converted)return;
+ const c=document.createElement('canvas');c.width=converted.width;c.height=converted.height;
+ c.getContext('2d').putImageData(converted,0,0);
+ c.toBlob(b=>{if(b)download(b,`pixelfit_converted_${c.width}x${c.height}.png`)},'image/png');
+};
+})();
+</script><script>
+'use strict';
+(function(){
+ const el=id=>document.getElementById(id);
+ const input=el('onlineUrl'),status=el('updateStatus');
+ const key='pixelfit_online_url_v1';
+ try{input.value=localStorage.getItem(key)||''}catch(e){}
+ if(location.protocol==='https:'||location.protocol==='http:'){
+  if(!input.value)input.value=location.origin+location.pathname;
+  status.textContent='オンライン版で動作中。公開ファイルを更新すると、次にこのURLを開いたとき最新版になります。';
+ }else{status.textContent='ローカル版で動作中。公開URLを設定すると、次回から同じURLで最新版を開けます。'}
+ function valid(){try{const u=new URL(input.value.trim());if(u.protocol!=='https:'&&u.protocol!=='http:')throw Error();return u.href}catch(e){status.textContent='https:// で始まる公開URLを入力してください';return null}}
+ el('saveOnlineUrl').onclick=()=>{const url=valid();if(!url)return;try{localStorage.setItem(key,url);status.textContent='公開URLを保存しました。次回もこのURLを使えます。'}catch(e){status.textContent='URLの保存ができませんでした。オンライン版は開けます。'}};
+ el('openOnline').onclick=()=>{const url=valid();if(!url)return;try{localStorage.setItem(key,url)}catch(e){};const u=new URL(url);u.searchParams.set('pixelfit_update',Date.now().toString());const a=document.createElement('a');a.href=u.href;a.target='_blank';a.rel='noopener noreferrer';document.body.appendChild(a);a.click();a.remove();status.textContent='オンライン版を新しいタブで開きます。開かない場合は公開URLを直接開いてください。';};
+})();
+</script><script>
+'use strict';
+(function(){
+ const el=id=>document.getElementById(id);
+ const overlay=el('artGuideOverlay');
+ const guideToggle=el('showArtGuides');
+ const report=el('artValidationReport');
+ const palette=window.PIXELFIT_ART.palette.map(x=>x.toUpperCase());
+ const paletteSet=new Set(palette);
+ function paintGuides(){
+   if(!overlay)return;
+   const cv=el('result');
+   if(overlay.width!==cv.width||overlay.height!==cv.height){overlay.width=cv.width;overlay.height=cv.height;}
+   const c=overlay.getContext('2d');c.clearRect(0,0,overlay.width,overlay.height);
+   if(!guideToggle.checked||overlay.width!==64||overlay.height!==64)return;
+   c.imageSmoothingEnabled=false;
+   // Exact pixel-grid guide, kept out of exported image data.
+   c.fillStyle='rgba(57,229,188,.70)';
+   for(let x=0;x<64;x+=2){c.fillRect(x,2,1,1);c.fillRect(x,57,1,1)}
+   c.fillStyle='#ffbd68';
+   c.fillRect(29,53,1,9);c.fillRect(25,57,9,1);
+   c.fillStyle='#171d21';c.fillRect(29,57,1,1);
+ }
+ guideToggle.addEventListener('change',paintGuides);
+ // Existing editor draw() is the single render path for edits, transforms, Undo and imports.
+ const originalDraw=draw;
+ draw=function(){originalDraw();paintGuides();};
+ paintGuides();
+ function inspect(){
+   const image=previewData||out;
+   if(!image){report.textContent='編集するPNGを読み込んでください。';report.dataset.result='fail';return;}
+   const data=image.data,used=new Set();let opaque=0,transparent=0,partial=0;
+   for(let i=0;i<data.length;i+=4){
+     const a=data[i+3];
+     if(a===0){transparent++;continue}
+     if(a===255)opaque++;else partial++;
+     used.add('#'+[data[i],data[i+1],data[i+2]].map(n=>n.toString(16).padStart(2,'0')).join('').toUpperCase());
+   }
+   const extra=[...used].filter(x=>!paletteSet.has(x));
+   const goodSize=image.width===64&&image.height===64;
+   const checks=[['64×64px',goodSize],['可視ピクセルあり',opaque+partial>0],['透明ピクセルあり',transparent>0],['アルファ0/255のみ',partial===0],['可視色64色以下',used.size<=64],['正式64色パレットに所属',extra.length===0]];
+   const passed=checks.every(x=>x[1]);
+   report.dataset.result=passed?'pass':'fail';
+   report.textContent=(passed?'形式検査：合格（候補）':'形式検査：要修正')+'\n'+checks.map(([n,ok])=>(ok?'✓ ':'✕ ')+n).join('  /  ')+'\n'+
+     'サイズ '+image.width+'×'+image.height+'px ／ 可視色 '+used.size+'色 ／ 不透明 '+opaque+'px ／ 半透明 '+partial+'px ／ 透明 '+transparent+'px'+
+     (extra.length?'\n規格外の色 '+extra.length+'色：'+extra.slice(0,14).join(', ')+(extra.length>14?' ほか':''):'')+
+     '\n※アンカーの実際の接地、身長55px、向き、画風、床との整合は自動判定できません。Godot確認シーンで目視してください。';
+ }
+ el('validateArt').addEventListener('click',inspect);
+ el('quantizeArt').addEventListener('click',()=>{
+   if(!out){report.textContent='先に画像を読み込んでください。';return}
+   if(!confirm('現在の新規候補の色を正式64色に置換します。既存採用済み原本には使わないでください。Undo可能ですが、色の差が失われます。続けますか？'))return;
+   if(previewData)applyTransform();
+   push();
+   const p=palette.map(hex=>[parseInt(hex.slice(1,3),16),parseInt(hex.slice(3,5),16),parseInt(hex.slice(5,7),16)]);
+   const cache=new Map();
+   for(let i=0;i<out.data.length;i+=4){
+     if(out.data[i+3]===0)continue;
+     const rgb=[out.data[i],out.data[i+1],out.data[i+2]];
+     const key=rgb.join(',');let nearest=cache.get(key);
+     if(!nearest){let best=Infinity;for(const c of p){const d=(rgb[0]-c[0])**2*.30+(rgb[1]-c[1])**2*.59+(rgb[2]-c[2])**2*.11;if(d<best){best=d;nearest=c}}cache.set(key,nearest)}
+     out.data[i]=nearest[0];out.data[i+1]=nearest[1];out.data[i+2]=nearest[2];
+   }
+   draw();inspect();message('正式64色へ置換しました。必要ならUndoで戻せます。半透明は別途修正してください。');
+ });
+ el('downloadArtMeta').addEventListener('click',()=>{
+   const dir=el('cameraDirection').value;
+   const dirs={se:'down_right',sw:'down_left',ne:'up_right',nw:'up_left'};
+   const isPerson=el('assetPreset').value==='saku'||el('assetPreset').value==='npc';
+   const meta={projection:'frontier_1p6_v1',palette:'frontier_shared_64_v1',canvas_px:[w,h],anchor_px:isPerson&&w===64&&h===64?[29,57]:null,facing:el('assetView').value==='iso'?(isPerson?dirs[dir]:'fixed'):'unspecified',scale:1.0,filter:'Nearest',note:isPerson?'人物は頭頂から接地まで55px。画像の向きと接地はGodotで要確認。':'接地面中央アンカーと占有範囲は素材ごとに設定すること。'};
+   const blob=new Blob([JSON.stringify(meta,null,2)],{type:'application/json;charset=utf-8'});
+   const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='frontier_art_metadata.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500);
+ });
+})();
+</script></body></html>
