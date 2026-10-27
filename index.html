@@ -56,7 +56,7 @@ main#editorMain{max-width:1400px;margin:0 auto;display:grid;grid-template-column
 .update-fields label{grid-column:1/-1;margin:0}.update-fields input{min-width:0;width:100%;background:#101721;color:#edf4fb;border:1px solid #415265;border-radius:7px;padding:10px}
 @media(max-width:850px){.world-swatches{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:500px){.update-fields{grid-template-columns:1fr}.world-swatches{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style></head><body>
-<header><div><h1>PixelFit <span style="color:#6ed9bd">Studio</span> <span class="badge">v1.7 / 共通アート規格</span></h1><small>ドット絵を描き直さず、1px単位で形を整える</small></div><div class="buttons"><button id="reset">元に戻す</button><button id="undo">↶ Undo</button><button id="redo">↷ Redo</button><button class="primary" id="export">PNGを書き出す</button></div></header>
+<header><div><h1>PixelFit <span style="color:#6ed9bd">Studio</span> <span class="badge">v1.8 / カメラ方向ロック</span></h1><small>ドット絵を描き直さず、1px単位で形を整える</small></div><div class="buttons"><button id="reset">元に戻す</button><button id="undo">↶ Undo</button><button id="redo">↷ Redo</button><button class="primary" id="export">PNGを書き出す</button></div></header>
 <main id="editorMain">
 <aside class="controls">
  <div class="controls-head"><h2>編集ツール</h2><span class="muted">画像を見ながら調整</span></div>
@@ -137,6 +137,17 @@ main#editorMain{max-width:1400px;margin:0 auto;display:grid;grid-template-column
 <div class="wide"><label for="assetName">素材名</label><input id="assetName" type="text" value="榊 朔太郎（宮大工の息子）" maxlength="100" autocomplete="off"></div>
 <div><label for="assetSize">完成キャンバス</label><select id="assetSize"><option value="64">64 × 64 px</option><option value="32">32 × 32 px</option><option value="96">96 × 96 px</option><option value="128">128 × 128 px</option><option value="192">192 × 192 px</option><option value="256">256 × 256 px</option></select></div>
 <div><label for="assetView">視点</label><select id="assetView"><option value="iso">斜め見下ろし（3/4ビュー）</option><option value="top">真上からの見下ろし</option><option value="side">横向き</option><option value="front">正面</option></select></div>
+<div class="wide" id="cameraLockGroup" style="border:1px solid #42675f;border-radius:9px;padding:12px;background:#152b2a">
+<label for="cameraDirection" style="font-weight:700;color:#8de2c8">カメラ方向ロック（全素材共通）</label>
+<select id="cameraDirection">
+<option value="se">画面右下から見る／キャラ右下向き【共通基準】</option>
+<option value="sw">画面左下から見る／キャラ左下向き</option>
+<option value="ne">画面右上から見る／キャラ右上向き</option>
+<option value="nw">画面左上から見る／キャラ左上向き</option>
+</select>
+<label style="display:flex;gap:9px;align-items:center;margin-top:10px;cursor:pointer"><input id="lockDirection" type="checkbox" checked style="width:18px;height:18px;accent-color:#61c2ad"><span>方向を固定してプロンプトに強制反映</span></label>
+<p id="cameraDirectionHelp" class="muted" style="margin:7px 0 0">全素材に同じカメラ方向を指定。向きの反転・カメラ回転を禁止します。</p>
+</div>
 <div><label for="assetWorld">世界観・画風</label><select id="assetWorld"><option value="wafu">FRONTIER TACTICS／戦国妖怪ファンタジー</option><option value="frontier">FRONTIER TACTICS／中世ファンタジー</option><option value="ruins">転生ローグライク／現実的な廃墟</option><option value="neutral">汎用レトロRPG</option></select></div>
 <div><label for="assetPalette">色数の目安</label><select id="assetPalette"><option value="12">最大12色程度</option><option value="16">最大16色程度</option><option value="20">最大20色程度</option><option value="24">最大24色程度</option><option value="32">最大32色程度</option><option value="free">指定なし</option></select></div>
 <div class="wide"><label for="assetDetails">追加の希望（任意）</label><input id="assetDetails" type="text" placeholder="例：手拭いを巻く、木槌を肩に担ぐ、歩行前の待機姿勢" maxlength="400"></div>
@@ -295,6 +306,12 @@ preset();loadImage(demoSrc,'src');setTimeout(()=>loadImage(demoRef,'ref'),80);
 const get=id=>document.getElementById(id);
 const ART=window.PIXELFIT_ART;
 const views={iso:'斜め見下ろし（3/4ビュー）。キャラは頭と正面・片側面、建物は屋根と正面・側面が見える。菱形マップに適した同じ向き。',top:'真上からの2D見下ろし',side:'横向き',front:'正面'};
+const CAMERA_DIRECTIONS={
+ se:{jp:'画面右下（↘）',en:'screen-bottom-right / southeast',walls:'屋根と手前側・右側の壁面'},
+ sw:{jp:'画面左下（↙）',en:'screen-bottom-left / southwest',walls:'屋根と手前側・左側の壁面'},
+ ne:{jp:'画面右上（↗）',en:'screen-top-right / northeast',walls:'屋根と奥側・右側の壁面'},
+ nw:{jp:'画面左上（↖）',en:'screen-top-left / northwest',walls:'屋根と奥側・左側の壁面'}
+};
 const worlds={wafu:ART.style,frontier:'中世ファンタジー。落ち着いたアースカラー、左上光源、整理されたドット表現。',ruins:'現実的な廃墟・日用品。低彩度、明確な輪郭、2Dドット絵。',neutral:'汎用レトロRPG。明確な輪郭と統一光源、低ノイズ。'};
 const types={
  saku:{name:'榊 朔太郎（宮大工の息子）',size:'64',colors:'16',role:'主人公キャラクター',extra:'19歳の宮大工の息子・見習い。黒髪・太眉・約3頭身。藍染めの短い仕事着、茶色の股引・脚絆・草鞋、手拭い。腰に墨壺・曲尺・鑿・道具袋。父の木槌を手に持つか肩に担ぐ。刀・鎧・兜・西洋騎士風は不可。職人としてのシルエットを重視。左手の火傷痕は判別できる場合のみ。'},
@@ -323,16 +340,47 @@ function generate(){
  const details=get('assetDetails').value.trim();
  const kind=get('assetPreset').value,asset=types[kind]||types.custom;
  const isWafu=get('assetWorld').value==='wafu';
+ const isIso=get('assetView').value==='iso';
+ const direction=CAMERA_DIRECTIONS[get('cameraDirection').value]||CAMERA_DIRECTIONS.se;
+ const locked=get('lockDirection').checked&&isIso;
+ const cameraGuide=locked?`【最重要：カメラ方向ロック／全素材で同じ向き】
+- 固定カメラ：${direction.jp}側から対象を見下ろす、約30度の仰角の3/4アイソメトリック視点。
+- 画面の上下左右を基準に指定する。左右反転、逆方向の3/4、カメラの回転・水平反転、真横・正面・真上からの視点は禁止。
+- キャラクターの顔・胸・つま先は${direction.jp}を向く。視線、鼻先、胸の方向、足の向きを一致させる。
+- 建物は${direction.walls}が見えるようにし、樹木・岩・道具も同じ固定カメラから描く。素材ごとにカメラを変更しない。
+- 基準となる菱形タイルの画面上の傾斜は横長（約58×36px）。足元または接地点を配置アンカーとする。
+- カメラ位置と光源は別の概念。光源は画面左上のまま固定する。
+- 生成画像が反対向きなら採用せず修正する。基準画像を添付した場合は、そのカメラ方向を優先して一致させる。
+English reinforcement: FIXED CAMERA from ${direction.en}, 30-degree elevation. Character FACING ${direction.en}. All assets share EXACT SAME camera azimuth. NO MIRROR, NO FLIPPED VIEW, NO REVERSE THREE-QUARTER VIEW, NO CAMERA ROTATION.
+`:'';
  const colorGuide=paletteLimit==='free'?'色数は必要最小限にし、共通パレットを優先する。':`この素材の不透明ピクセルは最大${paletteLimit}色程度を目標にする（ゲーム全体の64色とは別の上限）。`;
  const paletteText=ART.paletteGroups.map(([group,colors])=>`${group}: ${colors.join(' / ')}`).join('\n');
  const scene=isWafu?`【全素材共通のアート規格／FRONTIER TACTICS】\n- 世界観：${world}\n- 日本の文化・風習・伝承を形や材質に反映する。侍・妖怪・建築・植物・道具を同じ世界のものとして統一する。\n- 視点は同じ3/4アイソメトリック系。左上から光が当たり、右下を暗くする。輪郭と影は硬いピクセル境界。\n- 1ピクセルの情報密度を素材間で揃える。32px絵の単純な4倍拡大と、128pxで細密に描いた絵を無秩序に混ぜない。\n- 基本64色の中から必要な色だけを使う。各素材は12〜24色を目安とし、複雑な大型建築のみ32色程度まで許容。\n- 木・石・布・金属などの材質は原則3〜4色の明暗段階。彩度は抑え、地面より味方ユニットや重要物が見分けやすい明度差を確保。\n- 全素材共通64色（16分類×4色、HEX値厳守を目標）：\n${paletteText}\n- 可能な限りこの64色以外を追加しない。素材の使用色数が少ない場合は、64色から部分集合を選ぶ。\n`:`【アート規格】\n- ${world}\n- 光源とドット密度を同一ゲーム内の他素材と統一する。\n`;
- return `FRONTIER TACTICS向けゲーム用${asset.role}「${name}」を1点制作してください。\n\n【最重要：納品物】\n- 最終納品は${size}×${size}pxの実寸PNGファイル1点（RGBA、背景アルファ透明）。\n- 文字、設定画、比較表、スプライトシート、チェック柄、額縁、UI、背景、床、別オブジェクトは描かない。\n- 全体をキャンバス内に収め、輪郭を切らず適度な透明余白を残す。足元は下中央付近を配置基準とする。\n\n【素材固有の指定】\n- 対象：${name}\n- 種別：${asset.role}\n- 視点：${view}\n- デザイン指針：${asset.extra}\n- ${colorGuide}\n${details?`- 追加指定：${details}\n`:''}\n${scene}\n【ドット絵の品質】\n- ピクセルが1個ずつ判別できるネイティブなドット絵。アンチエイリアス、ぼかし、写真調の質感、連続グラデーションは禁止。\n- 1px単位で編集できる、整理されたシルエットと陰影。\n- 戦術ゲームの12×12菱形マップに並べたときに識別できる。\n\n【制作・検査】\n1. 単体のゲーム素材として設計する。\n2. AIの出力が${size}×${size}pxでなければ、最近傍補間を使って実寸PNGへ変換する。縮小で重要な形が潰れたら輪郭を修正する。\n3. 市松模様が焼き込まれていないか確認し、背景を透明化する。\n4. PNGをプログラムで開き、${size}×${size}px・RGBA・透明背景・使用色数・半透明画素を検査する。\n5. 共通64色から外れた色がある場合は、必要に応じて最も近い共通色へ置換し、変換後の色数を報告する。\n6. 完成PNGをファイルとして渡す。\n\n【次の工程】\nPixelFit Studioで部位の大きさと位置を調整し、1px単位で手描き修正する。元の意匠と統一パレットをなるべく維持する。`;
+ return `FRONTIER TACTICS向けゲーム用${asset.role}「${name}」を1点制作してください。\n\n【最重要：納品物】\n- 最終納品は${size}×${size}pxの実寸PNGファイル1点（RGBA、背景アルファ透明）。\n- 文字、設定画、比較表、スプライトシート、チェック柄、額縁、UI、背景、床、別オブジェクトは描かない。\n- 全体をキャンバス内に収め、輪郭を切らず適度な透明余白を残す。足元は下中央付近を配置基準とする。\n\n【素材固有の指定】\n- 対象：${name}\n- 種別：${asset.role}\n- 視点：${view}\n${cameraGuide?cameraGuide+'\n':''}- デザイン指針：${asset.extra}\n- ${colorGuide}\n${details?`- 追加指定：${details}\n`:''}\n${scene}\n【ドット絵の品質】\n- ピクセルが1個ずつ判別できるネイティブなドット絵。アンチエイリアス、ぼかし、写真調の質感、連続グラデーションは禁止。\n- 1px単位で編集できる、整理されたシルエットと陰影。\n- 戦術ゲームの12×12菱形マップに並べたときに識別できる。\n\n【制作・検査】\n1. 単体のゲーム素材として設計する。\n2. AIの出力が${size}×${size}pxでなければ、最近傍補間を使って実寸PNGへ変換する。縮小で重要な形が潰れたら輪郭を修正する。\n3. 市松模様が焼き込まれていないか確認し、背景を透明化する。\n4. PNGをプログラムで開き、${size}×${size}px・RGBA・透明背景・使用色数・半透明画素を検査する。\n5. 共通64色から外れた色がある場合は、必要に応じて最も近い共通色へ置換し、変換後の色数を報告する。\n6. 完成PNGをファイルとして渡す。\n\n【次の工程】\nPixelFit Studioで部位の大きさと位置を調整し、1px単位で手描き修正する。元の意匠と統一パレットをなるべく維持する。`;
 }
-function update(){get('generatedPrompt').value=generate();get('promptStatus').textContent='共通アート規格を反映しました';}
+function update(){
+ const iso=get('assetView').value==='iso';
+ get('cameraDirection').disabled=!iso;
+ get('lockDirection').disabled=!iso;
+ get('cameraDirectionHelp').textContent=!iso?'斜め見下ろし以外の視点では方向ロックは適用されません。':get('lockDirection').checked?'選択方向を全素材に強制反映。基準の向きはプリセット切替後も保持します。':'方向ロックはオフです。AIが左右を取り違える可能性があります。';
+ get('generatedPrompt').value=generate();
+ get('promptStatus').textContent=iso&&get('lockDirection').checked?'共通アート規格＋カメラ方向ロックを反映しました':'共通アート規格を反映しました';
+}
 function setPreset(){const type=types[get('assetPreset').value]||types.custom;get('assetName').value=type.name;get('assetSize').value=type.size;get('assetView').value='iso';get('assetWorld').value='wafu';get('assetPalette').value=type.colors;get('assetDetails').value='';update()}
 get('assetPreset').addEventListener('change',setPreset);
 ['assetName','assetDetails'].forEach(id=>get(id).addEventListener('input',update));
 ['assetSize','assetView','assetWorld','assetPalette'].forEach(id=>get(id).addEventListener('change',update));
+try{
+ const saved=JSON.parse(localStorage.getItem('pixelfit_camera_lock_v18')||'null');
+ if(saved&&CAMERA_DIRECTIONS[saved.direction])get('cameraDirection').value=saved.direction;
+ if(saved&&typeof saved.locked==='boolean')get('lockDirection').checked=saved.locked;
+}catch(e){}
+function changeCamera(){
+ try{localStorage.setItem('pixelfit_camera_lock_v18',JSON.stringify({direction:get('cameraDirection').value,locked:get('lockDirection').checked}))}catch(e){}
+ update();
+}
+get('cameraDirection').addEventListener('change',changeCamera);
+get('lockDirection').addEventListener('change',changeCamera);
 get('restorePrompt').addEventListener('click',update);
 get('copyPrompt').addEventListener('click',async()=>{const value=get('generatedPrompt').value;try{await navigator.clipboard.writeText(value);get('promptStatus').textContent='コピーしました。ChatGPTに貼り付けてください';}catch(e){get('generatedPrompt').focus();get('generatedPrompt').select();const ok=document.execCommand('copy');get('promptStatus').textContent=ok?'コピーしました':'Ctrl+Cでコピーしてください'}});
 get('downloadPrompt').addEventListener('click',()=>{const blob=new Blob(['\ufeff',get('generatedPrompt').value],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='pixelfit_prompt.txt';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);get('promptStatus').textContent='テキストファイルを保存しました'});
